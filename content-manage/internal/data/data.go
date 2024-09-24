@@ -14,7 +14,6 @@ var ProviderSet = wire.NewSet(NewData, NewContentRepo)
 
 // Data .
 type Data struct {
-	// TODO wrapped database client
 	db *gorm.DB
 }
 
