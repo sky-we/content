@@ -1,7 +1,7 @@
 GOHOSTOS:=$(shell go env GOHOSTOS)
 GOPATH:=$(shell go env GOPATH)
 VERSION=$(shell git describe --tags --always)
-Git_Bash="E:/Git/bin/bash.exe"
+Git_Bash="C:/Program Files/Git/bin/bash.exe"
 ifeq ($(GOHOSTOS), windows)
 	#the `find.exe` is different from `find` in bash/shell.
 	#to see https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/find.
@@ -61,6 +61,7 @@ all:
 	make api;
 	make config;
 	make generate;
+	make build;
 
 # show help
 help:

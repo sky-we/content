@@ -7,6 +7,7 @@ import (
 )
 
 type Content struct {
+	ID             int64         `json:"id"`              // 内容ID
 	Title          string        `json:"title"`           // 内容标题
 	Description    string        `json:"description"`     // 内容描述
 	Author         string        `json:"author"`          // 作者
@@ -21,11 +22,21 @@ type Content struct {
 	ApprovalStatus int32         `json:"approval_status"` // 审核状态 1-审核中 2-审核通过 3-审核不通过
 	UpdatedAt      time.Time     `json:"updated_at"`      // 内容更新时间
 	CreatedAt      time.Time     `json:"created_at"`      // 内容创建时间
+}
 
+type FindParams struct {
+	ID       int64
+	Author   string
+	Title    string
+	PageSize int64
+	Page     int64
 }
 
 type ContentRepo interface {
-	Create(ctx context.Context, content *Content) error
+	Create(ctx context.Context, content *Content) (int64, error)
+	Update(ctx context.Context, id int64, content *Content) error
+	Delete(ctx context.Context, id int64) error
+	Find(ctx context.Context, params *FindParams) (*[]*Content, int64, error)
 }
 
 type ContentUseCase struct {
@@ -37,8 +48,20 @@ func NewContentUseCase(repo ContentRepo, logger log.Logger) *ContentUseCase {
 	return &ContentUseCase{repo: repo, log: log.NewHelper(logger)}
 }
 
-func (c *ContentUseCase) CreateContent(ctx context.Context, content *Content) error {
+func (c *ContentUseCase) CreateContent(ctx context.Context, content *Content) (int64, error) {
 	c.log.WithContext(ctx).Infof("biz domain create content: %+v", content)
 	return c.repo.Create(ctx, content)
+}
 
+func (c *ContentUseCase) UpdateContent(ctx context.Context, id int64, content *Content) error {
+	c.log.WithContext(ctx).Infof("biz domain update content: id:%d, %+v", id, content)
+	return c.repo.Update(ctx, id, content)
+}
+func (c *ContentUseCase) DeleteContent(ctx context.Context, id int64) error {
+	c.log.WithContext(ctx).Infof("biz domain delete content: id:%d", id)
+	return c.repo.Delete(ctx, id)
+}
+func (c *ContentUseCase) FindContent(ctx context.Context, params *FindParams) (*[]*Content, int64, error) {
+	c.log.WithContext(ctx).Infof("biz domain find content: params:+%v", params)
+	return c.repo.Find(ctx, params)
 }

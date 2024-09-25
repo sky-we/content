@@ -20,14 +20,19 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	App_CreateContent_FullMethodName = "/api.content.operate.App/CreateContent"
+	App_UpdateContent_FullMethodName = "/api.content.operate.App/UpdateContent"
+	App_DeleteContent_FullMethodName = "/api.content.operate.App/DeleteContent"
+	App_FindContent_FullMethodName   = "/api.content.operate.App/FindContent"
 )
 
 // AppClient is the client API for App service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AppClient interface {
-	// 创建内容
 	CreateContent(ctx context.Context, in *CreateContentReq, opts ...grpc.CallOption) (*CreateContentRsp, error)
+	UpdateContent(ctx context.Context, in *UpdateContentReq, opts ...grpc.CallOption) (*UpdateContentRsp, error)
+	DeleteContent(ctx context.Context, in *DeleteContentReq, opts ...grpc.CallOption) (*DeleteContentRsp, error)
+	FindContent(ctx context.Context, in *FindContentReq, opts ...grpc.CallOption) (*FindContentRsp, error)
 }
 
 type appClient struct {
@@ -48,12 +53,44 @@ func (c *appClient) CreateContent(ctx context.Context, in *CreateContentReq, opt
 	return out, nil
 }
 
+func (c *appClient) UpdateContent(ctx context.Context, in *UpdateContentReq, opts ...grpc.CallOption) (*UpdateContentRsp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateContentRsp)
+	err := c.cc.Invoke(ctx, App_UpdateContent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appClient) DeleteContent(ctx context.Context, in *DeleteContentReq, opts ...grpc.CallOption) (*DeleteContentRsp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteContentRsp)
+	err := c.cc.Invoke(ctx, App_DeleteContent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *appClient) FindContent(ctx context.Context, in *FindContentReq, opts ...grpc.CallOption) (*FindContentRsp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(FindContentRsp)
+	err := c.cc.Invoke(ctx, App_FindContent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AppServer is the server API for App service.
 // All implementations must embed UnimplementedAppServer
 // for forward compatibility.
 type AppServer interface {
-	// 创建内容
 	CreateContent(context.Context, *CreateContentReq) (*CreateContentRsp, error)
+	UpdateContent(context.Context, *UpdateContentReq) (*UpdateContentRsp, error)
+	DeleteContent(context.Context, *DeleteContentReq) (*DeleteContentRsp, error)
+	FindContent(context.Context, *FindContentReq) (*FindContentRsp, error)
 	mustEmbedUnimplementedAppServer()
 }
 
@@ -66,6 +103,15 @@ type UnimplementedAppServer struct{}
 
 func (UnimplementedAppServer) CreateContent(context.Context, *CreateContentReq) (*CreateContentRsp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateContent not implemented")
+}
+func (UnimplementedAppServer) UpdateContent(context.Context, *UpdateContentReq) (*UpdateContentRsp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateContent not implemented")
+}
+func (UnimplementedAppServer) DeleteContent(context.Context, *DeleteContentReq) (*DeleteContentRsp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteContent not implemented")
+}
+func (UnimplementedAppServer) FindContent(context.Context, *FindContentReq) (*FindContentRsp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindContent not implemented")
 }
 func (UnimplementedAppServer) mustEmbedUnimplementedAppServer() {}
 func (UnimplementedAppServer) testEmbeddedByValue()             {}
@@ -106,6 +152,60 @@ func _App_CreateContent_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _App_UpdateContent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateContentReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).UpdateContent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: App_UpdateContent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).UpdateContent(ctx, req.(*UpdateContentReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _App_DeleteContent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteContentReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).DeleteContent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: App_DeleteContent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).DeleteContent(ctx, req.(*DeleteContentReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _App_FindContent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindContentReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).FindContent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: App_FindContent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).FindContent(ctx, req.(*FindContentReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // App_ServiceDesc is the grpc.ServiceDesc for App service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -116,6 +216,18 @@ var App_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateContent",
 			Handler:    _App_CreateContent_Handler,
+		},
+		{
+			MethodName: "UpdateContent",
+			Handler:    _App_UpdateContent_Handler,
+		},
+		{
+			MethodName: "DeleteContent",
+			Handler:    _App_DeleteContent_Handler,
+		},
+		{
+			MethodName: "FindContent",
+			Handler:    _App_FindContent_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -7,13 +7,10 @@ import (
 	"time"
 )
 
-func (app *AppService) CreateContent(ctx context.Context, req *operate.CreateContentReq) (*operate.CreateContentRsp, error) {
-
-	content := req.GetContent()
-
+func (app *AppService) UpdateContent(ctx context.Context, req *operate.UpdateContentReq) (*operate.UpdateContentRsp, error) {
 	uc := app.uc
-
-	newContentId, err := uc.CreateContent(ctx, &biz.Content{
+	content := req.GetContent()
+	err := uc.UpdateContent(ctx, content.GetID(), &biz.Content{
 		Title:          content.GetTitle(),
 		VideoURL:       content.GetVideoURL(),
 		Author:         content.GetAuthor(),
@@ -28,11 +25,20 @@ func (app *AppService) CreateContent(ctx context.Context, req *operate.CreateCon
 		ApprovalStatus: content.GetApprovalStatus(),
 	})
 	if err != nil {
-		return nil, err
+		return &operate.UpdateContentRsp{
+			Code: 2,
+			Msg:  "fail",
+			Data: map[string]int64{
+				"ID": content.GetID(),
+			},
+		}, nil
 	}
-	return &operate.CreateContentRsp{
+
+	return &operate.UpdateContentRsp{
 		Code: 0,
-		Msg:  "create ok",
-		Data: map[string]int64{"content_id": newContentId},
+		Msg:  "success",
+		Data: map[string]int64{
+			"ID": content.GetID(),
+		},
 	}, nil
 }
