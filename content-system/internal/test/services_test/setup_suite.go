@@ -89,7 +89,8 @@ func (suite *ContentTestSuite) SetupTest() {
 		Addr: redisServer.Addr(),
 	})
 	flowService := NewFlowService(FakeDbCfg.FlowService, suite.Db)
-	app := services.NewCmsApp(db, rdb, flowService)
+	appClient := NewAppClient(FakeDbCfg.AppClient)
+	app := services.NewCmsApp(db, rdb, flowService, appClient)
 	sessionMiddleware := &middleware.SessionAuth{Rdb: rdb}
 	root := r.Group(RootPath).Use(sessionMiddleware.Auth)
 	suite.DbName = dbName
@@ -158,7 +159,8 @@ func (suite *AccountTestSuite) SetupTest() {
 		Addr: redisServer.Addr(),
 	})
 	flowService := NewFlowService(FakeDbCfg.FlowService, suite.Db)
-	app := services.NewCmsApp(db, rdb, flowService)
+	appClient := NewAppClient(FakeDbCfg.AppClient)
+	app := services.NewCmsApp(db, rdb, flowService, appClient)
 	root := r.Group(OutRootPath)
 	suite.DbName = dbName
 	suite.Provider = pro

@@ -1,8 +1,12 @@
 package services
 
 import (
+	"content-system/internal/api/operate"
 	"content-system/internal/process"
+	"context"
 	"fmt"
+	"github.com/go-kratos/kratos/v2/middleware/recovery"
+	"github.com/go-kratos/kratos/v2/transport/grpc"
 	goflow "github.com/s8sg/goflow/v1"
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
@@ -29,10 +33,14 @@ type FlowServiceConfig struct {
 	Port              int
 	WorkerConcurrency int
 }
-
+type AppClientConfig struct {
+	Host string
+	Port int
+}
 type FakeDBConfig struct {
 	MySQL       *FakeMysqlConfig
 	FlowService *FlowServiceConfig
+	AppClient   *AppClientConfig
 }
 
 func LoadFakeDBConfig() {
@@ -92,17 +100,17 @@ func NewFlowService(cfg *FlowServiceConfig, db *gorm.DB) *goflow.FlowService {
 	return &fs
 }
 
-//func NewFlowService(cfg *FlowServiceConfig) *goflow.FlowService {
-//	fs := goflow.FlowService{
-//		Port:              cfg.Port,
-//		RedisURL:          cfg.RedisURL,
-//		WorkerConcurrency: cfg.WorkerConcurrency,
-//	}
-//	contentFlow := process.ContentFlow{}
-//	err := fs.Register("content-flow", contentFlow.ContentFlowHandle)
-//	if err != nil {
-//		panic(err)
-//	}
-//
-//	return &fs
-//}
+func NewAppClient(cfg *AppClientConfig) operate.AppClient {
+	endPoint := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
+	conn, err := grpc.DialInsecure(
+		context.Background(),
+		grpc.WithEndpoint(endPoint),
+		grpc.WithMiddleware(
+			recovery.Recovery(),
+		))
+	if err != nil {
+		panic(err)
+	}
+	client := operate.NewAppClient(conn)
+	return client
+}
