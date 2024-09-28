@@ -1,7 +1,7 @@
 package server
 
 import (
-	"content-manage/api/content/operate"
+	"content-manage/api/operate"
 	"content-manage/internal/conf"
 	"content-manage/internal/service"
 

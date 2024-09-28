@@ -4,6 +4,7 @@ import (
 	"content-system/internal/api/operate"
 	"context"
 	"github.com/gin-gonic/gin"
+	"github.com/go-kratos/kratos/v2/errors"
 	"net/http"
 	"time"
 )
@@ -56,57 +57,20 @@ func (app *CmsApp) ContentCreate(ctx *gin.Context) {
 		ApprovalStatus: contentCreateReq.ApprovalStatus,
 	}})
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Message": "服务器内部错误", "err": err.Error()})
-		return
-	}
-	/*contentDetailDao := dao.NewContentDetailDao(app.db)
-
-	// 内容是否重复上传
-	exists, err := contentDetailDao.IsVideoRepeat(contentCreateReq.VideoURL)
-	if exists {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"Message": fmt.Sprintf("[video_url=%s]内容已存在", contentCreateReq.VideoURL)})
-		return
-	}
-	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Message": "服务器内部错误", "err": err.Error()})
-		return
-	}
-	contentDetail := &model.ContentDetail{
-		Title:          contentCreateReq.Title,
-		Description:    contentCreateReq.Description,
-		Author:         contentCreateReq.Author,
-		VideoURL:       contentCreateReq.VideoURL,
-		Thumbnail:      contentCreateReq.Thumbnail,
-		Category:       contentCreateReq.Category,
-		Duration:       contentCreateReq.Duration,
-		Resolution:     contentCreateReq.Resolution,
-		FileSize:       contentCreateReq.FileSize,
-		Format:         contentCreateReq.Format,
-		Quality:        contentCreateReq.Quality,
-		ApprovalStatus: contentCreateReq.ApprovalStatus,
-		UpdatedAt:      contentCreateReq.UpdatedAt,
-		CreatedAt:      contentCreateReq.CreatedAt,
-	}
-
-	contentId, err := contentDetailDao.Create(contentDetail)
-	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Message": "服务器内部错误", "err": err.Error()})
-		return
-	}
-
-	body, err := json.Marshal(map[string]int{"input": contentId})
-	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Message": "服务器内部错误", "err": err.Error()})
+		ctx.AbortWithStatusJSON(errors.Code(err), gin.H{"Message": err.Error()})
 		return
 	}
 
 	// 数据加工开始
-	if execErr := app.flowService.Execute("content-flow", &goflow.Request{
-		Body: body,
-	}); execErr != nil {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Message": "call flow service failed", "err": execErr.Error()})
-		return
-	}*/
+
+	//req := http.NewRequest(http.MethodPost, "localhost:8080")
+	//
+	//if execErr := app.flowService.Execute("content-flow", &goflow.Request{
+	//	Body: body,
+	//}); execErr != nil {
+	//	ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Message": "call flow service failed", "err": execErr.Error()})
+	//	return
+	//}
 
 	ctx.JSON(http.StatusOK, &ContentCreateRsp{
 		Code:    0,

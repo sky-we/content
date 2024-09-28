@@ -1,15 +1,16 @@
 package services
 
 import (
-	"content-system/internal/dao"
-	"content-system/internal/model"
+	"content-system/internal/api/operate"
+	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/go-kratos/kratos/v2/errors"
 	"net/http"
 )
 
 type ContentDeleteReq struct {
-	ID int `json:"id" binding:"required"`
+	ID int64 `json:"id" binding:"required"`
 }
 
 type ContentDeleteRsp struct {
@@ -24,25 +25,15 @@ func (app *CmsApp) ContentDelete(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "参数错误", "error": err.Error()})
 		return
 	}
-	contentDetailDao := dao.NewContentDetailDao(app.db)
-	exists, err := contentDetailDao.IsExist(contentDeleteReq.ID)
-	if !exists {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"Message": fmt.Sprintf("[ID=%d]内容不存在]", contentDeleteReq.ID)})
-		return
-	}
+	_, err := app.operateAppClient.DeleteContent(context.Background(), &operate.DeleteContentReq{ContentID: contentDeleteReq.ID})
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Message": "服务器内部错误", "err": err.Error()})
-		return
-	}
-
-	if err := contentDetailDao.Delete(contentDeleteReq.ID, &model.ContentDetail{}); err != nil {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Message": "服务器内部错误", "err": err.Error()})
+		ctx.AbortWithStatusJSON(errors.Code(err), gin.H{"Message": err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, ContentDeleteRsp{
 		Code: 0,
 		Msg:  "success",
-		Data: fmt.Sprintf("ID %d delete", contentDeleteReq.ID),
+		Data: fmt.Sprintf("Content ID %d deleted", contentDeleteReq.ID),
 	})
 
 }

@@ -1,7 +1,7 @@
 package service
 
 import (
-	"content-manage/api/content/operate"
+	"content-manage/api/operate"
 	"context"
 )
 
@@ -12,9 +12,5 @@ func (app *AppService) DeleteContent(ctx context.Context, req *operate.DeleteCon
 	if err != nil {
 		return nil, err
 	}
-	return &operate.DeleteContentRsp{
-		Code: 0,
-		Msg:  "delete ok",
-		Data: map[string]int64{"content_id": id},
-	}, nil
+	return &operate.DeleteContentRsp{}, nil
 }

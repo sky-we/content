@@ -1,7 +1,7 @@
 package service
 
 import (
-	"content-manage/api/content/operate"
+	"content-manage/api/operate"
 	"content-manage/internal/biz"
 	"context"
 	"time"
@@ -25,20 +25,17 @@ func (app *AppService) UpdateContent(ctx context.Context, req *operate.UpdateCon
 		ApprovalStatus: content.GetApprovalStatus(),
 	})
 	if err != nil {
-		return &operate.UpdateContentRsp{
-			Code: 2,
-			Msg:  "fail",
-			Data: map[string]int64{
-				"ID": content.GetID(),
-			},
-		}, nil
+		return nil, err
 	}
 
-	return &operate.UpdateContentRsp{
-		Code: 0,
-		Msg:  "success",
-		Data: map[string]int64{
-			"ID": content.GetID(),
-		},
-	}, nil
+	return &operate.UpdateContentRsp{}, nil
+}
+
+func (app *AppService) UpdateContentCol(ctx context.Context, req *operate.UpdateContentColReq) (*operate.UpdateContentColRsp, error) {
+	uc := app.uc
+	err := uc.UpdateContentCol(ctx, req.GetId(), req.GetColName(), req.GetData())
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
 }

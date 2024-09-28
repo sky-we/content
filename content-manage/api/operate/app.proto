@@ -1,5 +1,5 @@
 syntax = "proto3";
-
+import "google/protobuf/any.proto";
 package api.content.operate;
 
 option go_package = "content-manage/api/content/operate;operate";
@@ -9,8 +9,10 @@ option java_package = "api.content.operate";
 service App {
   rpc CreateContent (CreateContentReq) returns (CreateContentRsp);
   rpc UpdateContent (UpdateContentReq) returns (UpdateContentRsp);
+  rpc UpdateContentCol (UpdateContentColReq) returns (UpdateContentColRsp);
   rpc DeleteContent (DeleteContentReq) returns (DeleteContentRsp);
   rpc FindContent (FindContentReq) returns (FindContentRsp);
+
 }
 
 message Content {
@@ -50,9 +52,7 @@ message CreateContentReq {
 }
 
 message CreateContentRsp {
-  int32 code = 1;
-  string msg = 2;
-  map<string, int64> data = 3;
+  int64 id = 1;
 }
 
 // 更新
@@ -60,22 +60,23 @@ message UpdateContentReq {
   Content content = 1;
 }
 
-message UpdateContentRsp {
-  int32 code = 1;
-  string msg = 2;
-  map<string, int64> data = 3;
+message UpdateContentRsp {}
+
+// 更新单列
+message UpdateContentColReq {
+  int64 id  =1;
+  string colName = 2;
+  google.protobuf.Any data = 3;
 }
+
+message UpdateContentColRsp {}
 
 // 删除
 message DeleteContentReq {
   int64 id = 1;
 }
 
-message DeleteContentRsp {
-  int32 code = 1;
-  string msg = 2;
-  map<string, int64> data = 3;
-}
+message DeleteContentRsp {}
 
 // 查找
 message FindContentReq {
@@ -87,8 +88,6 @@ message FindContentReq {
 }
 
 message FindContentRsp {
-  int32 code = 1;
-  string msg = 2;
-  repeated Content content = 3;
-  int64 total = 4;
+  repeated Content content = 1;
+  int64 total = 2;
 }

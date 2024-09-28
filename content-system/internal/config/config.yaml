@@ -22,10 +22,6 @@ redisWin:
   password: ""
   DB: 0
 
-flowService:
-  redisURL: "localhost:6379"
-  port: 8088
-  workerConcurrency: 5
 
 AppClient:
   host: "localhost"

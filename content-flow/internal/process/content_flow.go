@@ -1,22 +1,23 @@
 package process
 
 import (
-	"content-system/internal/dao"
-	"content-system/internal/middleware"
+	"content-flow/internal/api/operate"
+	"content-flow/internal/api/utils"
+	"content-flow/internal/middleware"
+	"context"
 	"encoding/json"
 	flow "github.com/s8sg/goflow/flow/v1"
-	"gorm.io/gorm"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 type ContentFlow struct {
-	ContentDao *dao.ContentDetailDao
+	appClient operate.AppClient
 }
 
 var Logger = middleware.GetLogger()
 
-func NewContentFlow(db *gorm.DB) *ContentFlow {
-	detailDao := dao.NewContentDetailDao(db)
-	return &ContentFlow{ContentDao: detailDao}
+func NewContentFlow(appClient operate.AppClient) *ContentFlow {
+	return &ContentFlow{appClient: appClient}
 }
 
 func (c *ContentFlow) ContentFlowHandle(workflow *flow.Workflow, context *flow.Context) error {
@@ -104,8 +105,8 @@ func (c *ContentFlow) category(data []byte, options map[string][]string) ([]byte
 	if err := json.Unmarshal(data, &input); err != nil {
 		return nil, err
 	}
-	contentId := int(input["id"].(float64))
-	err := c.ContentDao.UpdateColById(contentId, "category", "category-workflow")
+	contentId := int64(input["id"].(float64))
+	err := c.updateColById(contentId, "category", "category-workflow")
 	if err != nil {
 		return nil, err
 	}
@@ -117,8 +118,8 @@ func (c *ContentFlow) thumbnail(data []byte, options map[string][]string) ([]byt
 	if err := json.Unmarshal(data, &input); err != nil {
 		return nil, err
 	}
-	contentId := int(input["id"].(float64))
-	err := c.ContentDao.UpdateColById(contentId, "thumbnail", "thumbnail-workflow")
+	contentId := int64(input["id"].(float64))
+	err := c.updateColById(contentId, "thumbnail", "thumbnail-workflow")
 	if err != nil {
 		return nil, err
 	}
@@ -130,8 +131,8 @@ func (c *ContentFlow) format(data []byte, options map[string][]string) ([]byte, 
 	if err := json.Unmarshal(data, &input); err != nil {
 		return nil, err
 	}
-	contentId := int(input["id"].(float64))
-	err := c.ContentDao.UpdateColById(contentId, "format", "format-workflow")
+	contentId := int64(input["id"].(float64))
+	err := c.updateColById(contentId, "format", "format-workflow")
 	if err != nil {
 		return nil, err
 	}
@@ -143,9 +144,9 @@ func (c *ContentFlow) pass(data []byte, option map[string][]string) ([]byte, err
 	if err := json.Unmarshal(data, &input); err != nil {
 		return nil, err
 	}
-	contentID := int(input["id"].(float64))
+	contentID := int64(input["id"].(float64))
 	// 审核成功
-	if err := c.ContentDao.UpdateColById(contentID, "approval_status", 2); err != nil {
+	if err := c.updateColById(contentID, "approval_status", 2); err != nil {
 		return nil, err
 	}
 	return data, nil
@@ -156,9 +157,13 @@ func (c *ContentFlow) fail(data []byte, options map[string][]string) ([]byte, er
 	if err := json.Unmarshal(data, &input); err != nil {
 		return nil, err
 	}
-	contentId := int(input["id"].(float64))
+	contentId := int64(input["id"].(float64))
 	// 审核失败
-	if err := c.ContentDao.UpdateColById(contentId, "approval_status", 3); err != nil {
+	a, err := anypb.New(3)
+	if err != nil {
+		return nil, err
+	}
+	if err := c.updateColById(contentId, "approval_status"); err != nil {
 		return nil, err
 	}
 	return data, nil
@@ -168,4 +173,36 @@ func (c *ContentFlow) finish(data []byte, options map[string][]string) ([]byte, 
 	Logger.Info("exec finish node...")
 	Logger.Info(string(data))
 	return data, nil
+}
+
+func (c *ContentFlow) updateColById(contentId int64, colName string, data any) error {
+
+	content := &operate.Content{
+		ID:             contentId,
+		Title:          "",
+		VideoURL:       "",
+		Author:         "",
+		Description:    "",
+		Thumbnail:      "",
+		Category:       "",
+		Duration:       0,
+		Resolution:     "",
+		FileSize:       0,
+		Format:         "",
+		Quality:        0,
+		ApprovalStatus: 0,
+	}
+
+	if err := utils.UpdateField(content, colName, data); err != nil {
+		return err
+	}
+
+	_, err := c.appClient.UpdateContent(context.Background(), &operate.UpdateContentReq{
+		Content: content,
+	})
+
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -1,7 +1,7 @@
 package service
 
 import (
-	"content-manage/api/content/operate"
+	"content-manage/api/operate"
 	"content-manage/internal/biz"
 )
 

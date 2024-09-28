@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v5.28.2
-// source: content/operate/app.proto
+// source: operate/app.proto
 
 package operate
 
@@ -19,10 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	App_CreateContent_FullMethodName = "/api.content.operate.App/CreateContent"
-	App_UpdateContent_FullMethodName = "/api.content.operate.App/UpdateContent"
-	App_DeleteContent_FullMethodName = "/api.content.operate.App/DeleteContent"
-	App_FindContent_FullMethodName   = "/api.content.operate.App/FindContent"
+	App_CreateContent_FullMethodName    = "/api.content.operate.App/CreateContent"
+	App_UpdateContent_FullMethodName    = "/api.content.operate.App/UpdateContent"
+	App_UpdateContentCol_FullMethodName = "/api.content.operate.App/UpdateContentCol"
+	App_DeleteContent_FullMethodName    = "/api.content.operate.App/DeleteContent"
+	App_FindContent_FullMethodName      = "/api.content.operate.App/FindContent"
 )
 
 // AppClient is the client API for App service.
@@ -31,6 +32,7 @@ const (
 type AppClient interface {
 	CreateContent(ctx context.Context, in *CreateContentReq, opts ...grpc.CallOption) (*CreateContentRsp, error)
 	UpdateContent(ctx context.Context, in *UpdateContentReq, opts ...grpc.CallOption) (*UpdateContentRsp, error)
+	UpdateContentCol(ctx context.Context, in *UpdateContentColReq, opts ...grpc.CallOption) (*UpdateContentColRsp, error)
 	DeleteContent(ctx context.Context, in *DeleteContentReq, opts ...grpc.CallOption) (*DeleteContentRsp, error)
 	FindContent(ctx context.Context, in *FindContentReq, opts ...grpc.CallOption) (*FindContentRsp, error)
 }
@@ -63,6 +65,16 @@ func (c *appClient) UpdateContent(ctx context.Context, in *UpdateContentReq, opt
 	return out, nil
 }
 
+func (c *appClient) UpdateContentCol(ctx context.Context, in *UpdateContentColReq, opts ...grpc.CallOption) (*UpdateContentColRsp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateContentColRsp)
+	err := c.cc.Invoke(ctx, App_UpdateContentCol_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *appClient) DeleteContent(ctx context.Context, in *DeleteContentReq, opts ...grpc.CallOption) (*DeleteContentRsp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteContentRsp)
@@ -89,6 +101,7 @@ func (c *appClient) FindContent(ctx context.Context, in *FindContentReq, opts ..
 type AppServer interface {
 	CreateContent(context.Context, *CreateContentReq) (*CreateContentRsp, error)
 	UpdateContent(context.Context, *UpdateContentReq) (*UpdateContentRsp, error)
+	UpdateContentCol(context.Context, *UpdateContentColReq) (*UpdateContentColRsp, error)
 	DeleteContent(context.Context, *DeleteContentReq) (*DeleteContentRsp, error)
 	FindContent(context.Context, *FindContentReq) (*FindContentRsp, error)
 	mustEmbedUnimplementedAppServer()
@@ -106,6 +119,9 @@ func (UnimplementedAppServer) CreateContent(context.Context, *CreateContentReq) 
 }
 func (UnimplementedAppServer) UpdateContent(context.Context, *UpdateContentReq) (*UpdateContentRsp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateContent not implemented")
+}
+func (UnimplementedAppServer) UpdateContentCol(context.Context, *UpdateContentColReq) (*UpdateContentColRsp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateContentCol not implemented")
 }
 func (UnimplementedAppServer) DeleteContent(context.Context, *DeleteContentReq) (*DeleteContentRsp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteContent not implemented")
@@ -170,6 +186,24 @@ func _App_UpdateContent_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _App_UpdateContentCol_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateContentColReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AppServer).UpdateContentCol(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: App_UpdateContentCol_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AppServer).UpdateContentCol(ctx, req.(*UpdateContentColReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _App_DeleteContent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteContentReq)
 	if err := dec(in); err != nil {
@@ -222,6 +256,10 @@ var App_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _App_UpdateContent_Handler,
 		},
 		{
+			MethodName: "UpdateContentCol",
+			Handler:    _App_UpdateContentCol_Handler,
+		},
+		{
 			MethodName: "DeleteContent",
 			Handler:    _App_DeleteContent_Handler,
 		},
@@ -231,5 +269,5 @@ var App_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "content/operate/app.proto",
+	Metadata: "operate/app.proto",
 }

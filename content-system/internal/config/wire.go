@@ -3,17 +3,16 @@ package config
 import (
 	"content-system/internal/api/operate"
 	"content-system/internal/middleware"
-	"content-system/internal/process"
 	"context"
 	"fmt"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"github.com/redis/go-redis/v9"
-	goflow "github.com/s8sg/goflow/v1"
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"sync"
+	"time"
 )
 
 type MysqlConfig struct {
@@ -124,21 +123,6 @@ func NewRdb(cfg *RedisConfig) *redis.Client {
 	return rdb
 }
 
-func NewFlowService(cfg *FlowServiceConfig, db *gorm.DB) *goflow.FlowService {
-	fs := goflow.FlowService{
-		Port:              cfg.Port,
-		RedisURL:          cfg.RedisURL,
-		WorkerConcurrency: cfg.WorkerConcurrency,
-	}
-	contentFlow := process.NewContentFlow(db)
-	err := fs.Register("content-flow", contentFlow.ContentFlowHandle)
-	if err != nil {
-		panic(err)
-	}
-
-	return &fs
-}
-
 func NewAppClient(cfg *AppClientConfig) operate.AppClient {
 	endPoint := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
 	conn, err := grpc.DialInsecure(
@@ -146,7 +130,9 @@ func NewAppClient(cfg *AppClientConfig) operate.AppClient {
 		grpc.WithEndpoint(endPoint),
 		grpc.WithMiddleware(
 			recovery.Recovery(),
-		))
+		),
+		grpc.WithTimeout(time.Second*1000),
+	)
 	if err != nil {
 		panic(err)
 	}

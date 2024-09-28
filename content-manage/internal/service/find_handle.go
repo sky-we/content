@@ -1,7 +1,7 @@
 package service
 
 import (
-	"content-manage/api/content/operate"
+	"content-manage/api/operate"
 	"content-manage/internal/biz"
 	"context"
 )
@@ -39,8 +39,6 @@ func (app *AppService) FindContent(ctx context.Context, req *operate.FindContent
 		})
 	}
 	return &operate.FindContentRsp{
-		Code:    200,
-		Msg:     "success",
 		Content: contents,
 		Total:   total,
 	}, nil

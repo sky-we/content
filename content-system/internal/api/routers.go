@@ -15,14 +15,13 @@ const (
 func CmsRouters(r *gin.Engine) {
 	db := config.NewMySqlDB(config.DBConfig.MySQL)
 	rdb := config.NewRdb(config.DBConfig.Redis)
-	flowService := config.NewFlowService(config.DBConfig.FlowService, db)
 	appClient := config.NewAppClient(config.DBConfig.AppClient)
 
 	// 依赖注入
-	cmsApp := services.NewCmsApp(db, rdb, flowService, appClient)
+	cmsApp := services.NewCmsApp(db, rdb, appClient)
 
 	// 启动内容加工Flow
-	cmsApp.StartFlow(flowService)
+	//cmsApp.StartFlow(flowService)
 
 	// 鉴权中间件
 	sessionMiddleware := &middleware.SessionAuth{Rdb: rdb}

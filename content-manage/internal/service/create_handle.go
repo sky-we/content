@@ -1,7 +1,7 @@
 package service
 
 import (
-	"content-manage/api/content/operate"
+	"content-manage/api/operate"
 	"content-manage/internal/biz"
 	"context"
 	"time"
@@ -13,7 +13,7 @@ func (app *AppService) CreateContent(ctx context.Context, req *operate.CreateCon
 
 	uc := app.uc
 
-	newContentId, err := uc.CreateContent(ctx, &biz.Content{
+	ContentID, err := uc.CreateContent(ctx, &biz.Content{
 		Title:          content.GetTitle(),
 		VideoURL:       content.GetVideoURL(),
 		Author:         content.GetAuthor(),
@@ -31,8 +31,6 @@ func (app *AppService) CreateContent(ctx context.Context, req *operate.CreateCon
 		return nil, err
 	}
 	return &operate.CreateContentRsp{
-		Code: 0,
-		Msg:  "create ok",
-		Data: map[string]int64{"content_id": newContentId},
+		Id: ContentID,
 	}, nil
 }
