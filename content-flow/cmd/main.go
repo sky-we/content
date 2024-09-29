@@ -1,12 +1,20 @@
-package cmd
+package main
 
-import "content-flow/internal/config"
+import (
+	"content-flow/internal/config"
+	"content-flow/internal/middleware"
+	"fmt"
+)
 
 func init() {
-	config.LoadFlowConfig()
+	config.LoadFlowCfg()
 }
 
-//func main() {
-//	fs := config.NewFlowService(config.)
-//	fs.start
-//}
+func main() {
+	middleware.InitLogger()
+	fs := config.NewFlowService(config.WireCfg.FlowService)
+	if err := fs.Start(); err != nil {
+		fmt.Println("go-flow service start error")
+		panic(err)
+	}
+}

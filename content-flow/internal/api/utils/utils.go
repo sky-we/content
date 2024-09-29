@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-func UpdateField(obj any, fieldName string, newValue any) error {
+func UpdateStructField(obj any, fieldName string, newValue any) error {
 	// 获取对象的反射值
 	val := reflect.ValueOf(obj).Elem()
 

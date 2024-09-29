@@ -6,18 +6,19 @@ import (
 	"content-flow/internal/middleware"
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	flow "github.com/s8sg/goflow/flow/v1"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 type ContentFlow struct {
-	appClient operate.AppClient
+	client operate.AppClient
 }
 
 var Logger = middleware.GetLogger()
 
-func NewContentFlow(appClient operate.AppClient) *ContentFlow {
-	return &ContentFlow{appClient: appClient}
+func NewContentFlow(client operate.AppClient) *ContentFlow {
+	return &ContentFlow{client: client}
 }
 
 func (c *ContentFlow) ContentFlowHandle(workflow *flow.Workflow, context *flow.Context) error {
@@ -33,7 +34,7 @@ func (c *ContentFlow) ContentFlowHandle(workflow *flow.Workflow, context *flow.C
 			if err := json.Unmarshal(bytes, &data); err != nil {
 				return nil
 			}
-			if data["approval_status"].(float64) == 2 {
+			if data["ApprovalStatus"].(float64) == 2 {
 				return []string{"category", "thumbnail", "pass", "format"}
 			}
 			return []string{"fail"}
@@ -63,15 +64,20 @@ func (c *ContentFlow) input(data []byte, options map[string][]string) ([]byte, e
 	if err := json.Unmarshal(data, &d); err != nil {
 		return nil, err
 	}
-	id := d["input"]
-	detail, err := c.ContentDao.First(id)
+	id := int64(d["input"])
+	detail, err := c.client.FindContent(context.Background(), &operate.FindContentReq{
+		Id: id,
+	})
 	if err != nil {
 		return nil, err
 	}
+	if detail.Content == nil {
+		return nil, errors.New(fmt.Sprintf("ID [%d] content detail not found", id))
+	}
 	result, err := json.Marshal(map[string]interface{}{
-		"title":     detail.Title,
-		"video_url": detail.VideoURL,
-		"id":        detail.ID,
+		"title":     detail.Content[0].Title,
+		"video_url": detail.Content[0].VideoURL,
+		"id":        detail.Content[0].ID,
 	})
 	if err != nil {
 		return nil, err
@@ -91,9 +97,9 @@ func (c *ContentFlow) verify(data []byte, options map[string][]string) ([]byte, 
 		id       = detail["id"]
 	)
 	if int(id.(float64))%2 == 0 {
-		detail["approval_status"] = 3
+		detail["ApprovalStatus"] = 3
 	} else {
-		detail["approval_status"] = 2
+		detail["ApprovalStatus"] = 2
 	}
 	Logger.Info(id, title, videoUrl)
 	return json.Marshal(detail)
@@ -106,7 +112,7 @@ func (c *ContentFlow) category(data []byte, options map[string][]string) ([]byte
 		return nil, err
 	}
 	contentId := int64(input["id"].(float64))
-	err := c.updateColById(contentId, "category", "category-workflow")
+	err := c.updateColById(contentId, "Category", "category-workflow")
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +125,7 @@ func (c *ContentFlow) thumbnail(data []byte, options map[string][]string) ([]byt
 		return nil, err
 	}
 	contentId := int64(input["id"].(float64))
-	err := c.updateColById(contentId, "thumbnail", "thumbnail-workflow")
+	err := c.updateColById(contentId, "Thumbnail", "thumbnail-workflow")
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +138,7 @@ func (c *ContentFlow) format(data []byte, options map[string][]string) ([]byte, 
 		return nil, err
 	}
 	contentId := int64(input["id"].(float64))
-	err := c.updateColById(contentId, "format", "format-workflow")
+	err := c.updateColById(contentId, "Format", "format-workflow")
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +152,7 @@ func (c *ContentFlow) pass(data []byte, option map[string][]string) ([]byte, err
 	}
 	contentID := int64(input["id"].(float64))
 	// 审核成功
-	if err := c.updateColById(contentID, "approval_status", 2); err != nil {
+	if err := c.updateColById(contentID, "ApprovalStatus", int32(2)); err != nil {
 		return nil, err
 	}
 	return data, nil
@@ -159,11 +165,8 @@ func (c *ContentFlow) fail(data []byte, options map[string][]string) ([]byte, er
 	}
 	contentId := int64(input["id"].(float64))
 	// 审核失败
-	a, err := anypb.New(3)
-	if err != nil {
-		return nil, err
-	}
-	if err := c.updateColById(contentId, "approval_status"); err != nil {
+
+	if err := c.updateColById(contentId, "ApprovalStatus", int32(3)); err != nil {
 		return nil, err
 	}
 	return data, nil
@@ -193,13 +196,13 @@ func (c *ContentFlow) updateColById(contentId int64, colName string, data any) e
 		ApprovalStatus: 0,
 	}
 
-	if err := utils.UpdateField(content, colName, data); err != nil {
+	if err := utils.UpdateStructField(content, colName, data); err != nil {
 		return err
 	}
 
-	_, err := c.appClient.UpdateContent(context.Background(), &operate.UpdateContentReq{
+	_, err := c.client.UpdateContent(context.Background(), &operate.UpdateContentReq{
 		Content: content,
-	})
+	}, nil)
 
 	if err != nil {
 		return err
