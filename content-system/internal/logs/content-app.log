@@ -167,3 +167,15 @@
 {"level":"info","msg":"redis connect option:{ localhost:6379  \u003cnil\u003e \u003cnil\u003e 0   \u003cnil\u003e \u003cnil\u003e 0 0 0s 0s 0s 0s 0s false false 0 0s 0 0 0 0s 0s \u003cnil\u003e \u003cnil\u003e false false }","time":"2024-09-28T14:42:31+08:00"}
 {"level":"error","msg":"redis: nil","time":"2024-09-28T14:42:46+08:00"}
 {"level":"info","msg":"session id = %ssession_auth:d61a1dea-bf63-4611-813b-1ad8851566a9","time":"2024-09-28T14:42:56+08:00"}
+{"level":"info","msg":"mysql connect dsn:root:1qaz!QAZ@tcp(localhost:3306)/?charset=utf8mb4\u0026parseTime=True\u0026loc=Local","time":"2024-09-28T14:43:37+08:00"}
+{"level":"info","msg":"redis connect option:{ localhost:6379  \u003cnil\u003e \u003cnil\u003e 0   \u003cnil\u003e \u003cnil\u003e 0 0 0s 0s 0s 0s 0s false false 0 0s 0 0 0 0s 0s \u003cnil\u003e \u003cnil\u003e false false }","time":"2024-09-28T14:43:37+08:00"}
+{"level":"info","msg":"session id = %ssession_auth:d61a1dea-bf63-4611-813b-1ad8851566a9","time":"2024-09-28T14:43:54+08:00"}
+{"level":"info","msg":"session id = %ssession_auth:d61a1dea-bf63-4611-813b-1ad8851566a9","time":"2024-09-28T14:44:04+08:00"}
+{"level":"info","msg":"mysql connect dsn:root:1qaz!QAZ@tcp(localhost:3306)/?charset=utf8mb4\u0026parseTime=True\u0026loc=Local","time":"2024-09-29T22:48:37+08:00"}
+{"level":"info","msg":"redis connect option:{ localhost:6379  \u003cnil\u003e \u003cnil\u003e 0   \u003cnil\u003e \u003cnil\u003e 0 0 0s 0s 0s 0s 0s false false 0 0s 0 0 0 0s 0s \u003cnil\u003e \u003cnil\u003e false false }","time":"2024-09-29T22:48:37+08:00"}
+{"level":"info","msg":"session id = %ssession_auth:896b98c6-3f99-4d70-8f06-59e645303bc4","time":"2024-09-29T22:49:13+08:00"}
+{"level":"info","msg":"create content","time":"2024-09-29T22:49:13+08:00"}
+{"level":"info","msg":"mysql connect dsn:root:1qaz!QAZ@tcp(localhost:3306)/?charset=utf8mb4\u0026parseTime=True\u0026loc=Local","time":"2024-09-29T22:51:00+08:00"}
+{"level":"info","msg":"redis connect option:{ localhost:6379  \u003cnil\u003e \u003cnil\u003e 0   \u003cnil\u003e \u003cnil\u003e 0 0 0s 0s 0s 0s 0s false false 0 0s 0 0 0 0s 0s \u003cnil\u003e \u003cnil\u003e false false }","time":"2024-09-29T22:51:00+08:00"}
+{"level":"info","msg":"session id = %ssession_auth:896b98c6-3f99-4d70-8f06-59e645303bc4","time":"2024-09-29T22:52:26+08:00"}
+{"level":"info","msg":"create content","time":"2024-09-29T22:52:26+08:00"}

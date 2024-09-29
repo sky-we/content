@@ -25,7 +25,7 @@ func (app *CmsApp) ContentDelete(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "参数错误", "error": err.Error()})
 		return
 	}
-	_, err := app.operateAppClient.DeleteContent(context.Background(), &operate.DeleteContentReq{ContentID: contentDeleteReq.ID})
+	_, err := app.operateAppClient.DeleteContent(context.Background(), &operate.DeleteContentReq{Id: contentDeleteReq.ID})
 	if err != nil {
 		ctx.AbortWithStatusJSON(errors.Code(err), gin.H{"Message": err.Error()})
 		return

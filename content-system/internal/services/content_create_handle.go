@@ -2,6 +2,7 @@ package services
 
 import (
 	"content-system/internal/api/operate"
+	"content-system/internal/config"
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/go-kratos/kratos/v2/errors"
@@ -62,15 +63,11 @@ func (app *CmsApp) ContentCreate(ctx *gin.Context) {
 	}
 
 	// 数据加工开始
-
-	//req := http.NewRequest(http.MethodPost, "localhost:8080")
-	//
-	//if execErr := app.flowService.Execute("content-flow", &goflow.Request{
-	//	Body: body,
-	//}); execErr != nil {
-	//	ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Message": "call flow service failed", "err": execErr.Error()})
-	//	return
-	//}
+	go func() {
+		if err := app.startContentFlow(rsp.Id, config.Required.FlowServiceClient); err != nil {
+			Logger.Errorf("start content flow error %v", err)
+		}
+	}()
 
 	ctx.JSON(http.StatusOK, &ContentCreateRsp{
 		Code:    0,

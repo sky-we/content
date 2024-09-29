@@ -43,10 +43,10 @@ type RedisWinConfig struct {
 	DB       int
 }
 
-type FlowServiceConfig struct {
-	RedisURL          string
-	Port              int
-	WorkerConcurrency int
+type FlowServiceClientConfig struct {
+	Host     string
+	Port     int
+	FlowName string
 }
 
 type AppClientConfig struct {
@@ -54,17 +54,18 @@ type AppClientConfig struct {
 	Port int
 }
 
-type DataBaseConfig struct {
-	MySQL       *MysqlConfig
-	Redis       *RedisConfig
-	RedisWin    *RedisWinConfig
-	FlowService *FlowServiceConfig
-	AppClient   *AppClientConfig
+type RequiredConfig struct {
+	// 工程依赖组件的配置
+	MySQL             *MysqlConfig
+	Redis             *RedisConfig
+	RedisWin          *RedisWinConfig
+	FlowServiceClient *FlowServiceClientConfig
+	AppClient         *AppClientConfig
 }
 
 var (
 	once     sync.Once
-	DBConfig *DataBaseConfig
+	Required *RequiredConfig
 	Logger   = middleware.GetLogger()
 )
 
@@ -80,7 +81,7 @@ func LoadDBConfig() {
 			panic(err)
 
 		}
-		if err := viper.Unmarshal(&DBConfig); err != nil {
+		if err := viper.Unmarshal(&Required); err != nil {
 			Logger.Error("unable to decode into struct, %v", err)
 			panic(err)
 		}

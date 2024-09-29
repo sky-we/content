@@ -18,6 +18,7 @@ type FlowService struct {
 	Port              int
 	RedisURL          string
 	WorkerConcurrency int
+	FlowName          string
 }
 
 type AppClient struct {
@@ -25,14 +26,14 @@ type AppClient struct {
 	Port int
 }
 
-type WireConfig struct {
+type Required struct {
 	FlowService *FlowService
 	AppClient   *AppClient
 }
 
 var (
 	once    sync.Once
-	WireCfg WireConfig
+	WireCfg Required
 	Logger  = middleware.GetLogger()
 )
 
@@ -63,7 +64,7 @@ func NewFlowService(cfg *FlowService) *goflow.FlowService {
 	}
 	client := NewAppClient(WireCfg.AppClient)
 	contentFlow := process.NewContentFlow(client)
-	err := fs.Register("contentFlow", contentFlow.ContentFlowHandle)
+	err := fs.Register(cfg.FlowName, contentFlow.ContentFlowHandle)
 	if err != nil {
 		panic(err)
 	}

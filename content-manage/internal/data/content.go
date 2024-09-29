@@ -46,7 +46,7 @@ func NewContentRepo(data *Data, logger log.Logger) biz.ContentRepo {
 	}
 }
 
-func (c *contentRepo) Create(ctx context.Context, content *biz.Content) (contentID int64, err *errors.Error) {
+func (c *contentRepo) Create(ctx context.Context, content *biz.Content) (contentID int64, err error) {
 	db := c.data.db
 	repeat, err := c.IsVideoRepeat(ctx, content.VideoURL)
 	if err != nil {
@@ -78,7 +78,7 @@ func (c *contentRepo) Create(ctx context.Context, content *biz.Content) (content
 	return detail.ID, nil
 }
 
-func (c *contentRepo) Update(ctx context.Context, id int64, content *biz.Content) *errors.Error {
+func (c *contentRepo) Update(ctx context.Context, id int64, content *biz.Content) error {
 	db := c.data.db
 	exists, err := c.IsExist(ctx, id)
 	if err != nil {
@@ -101,8 +101,8 @@ func (c *contentRepo) Update(ctx context.Context, id int64, content *biz.Content
 		Format:         content.Format,
 		Quality:        content.Quality,
 		ApprovalStatus: content.ApprovalStatus,
-		UpdatedAt:      time.Time{},
-		CreatedAt:      time.Time{},
+		UpdatedAt:      time.Now(),
+		CreatedAt:      time.Now(),
 	}
 	if err := db.Where("id = ?", id).Updates(&detail).Error; err != nil {
 		return errors.New(http.StatusInternalServerError, "Update Content Failed", err.Error())
@@ -110,7 +110,7 @@ func (c *contentRepo) Update(ctx context.Context, id int64, content *biz.Content
 	return nil
 }
 
-func (c *contentRepo) UpdateCol(ctx context.Context, id int64, colName string, data any) *errors.Error {
+func (c *contentRepo) UpdateCol(ctx context.Context, id int64, colName string, data any) error {
 	db := c.data.db
 	exists, err := c.IsExist(ctx, id)
 	if err != nil {
@@ -125,7 +125,7 @@ func (c *contentRepo) UpdateCol(ctx context.Context, id int64, colName string, d
 	return nil
 }
 
-func (c *contentRepo) Delete(ctx context.Context, id int64) *errors.Error {
+func (c *contentRepo) Delete(ctx context.Context, id int64) error {
 	db := c.data.db
 	exists, err := c.IsExist(ctx, id)
 	if err != nil {
@@ -142,7 +142,7 @@ func (c *contentRepo) Delete(ctx context.Context, id int64) *errors.Error {
 	return nil
 }
 
-func (c *contentRepo) IsExist(ctx context.Context, id int64) (bool, *errors.Error) {
+func (c *contentRepo) IsExist(ctx context.Context, id int64) (bool, error) {
 	db := c.data.db
 	if err := db.Where("id = ?", id).First(&ContentDetail{}).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -154,7 +154,7 @@ func (c *contentRepo) IsExist(ctx context.Context, id int64) (bool, *errors.Erro
 	return true, nil
 }
 
-func (c *contentRepo) IsVideoRepeat(ctx context.Context, videoUrl string) (bool, *errors.Error) {
+func (c *contentRepo) IsVideoRepeat(ctx context.Context, videoUrl string) (bool, error) {
 	db := c.data.db
 	var contentDetail ContentDetail
 	err := db.Where("video_url = ?", videoUrl).First(&contentDetail).Error
@@ -169,7 +169,7 @@ func (c *contentRepo) IsVideoRepeat(ctx context.Context, videoUrl string) (bool,
 	return true, nil
 }
 
-func (c *contentRepo) First(ctx context.Context, id int64) (*ContentDetail, *errors.Error) {
+func (c *contentRepo) First(ctx context.Context, id int64) (*ContentDetail, error) {
 	db := c.data.db
 	var detail ContentDetail
 	err := db.Where("id = ?", id).First(&detail).Error
@@ -182,7 +182,7 @@ func (c *contentRepo) First(ctx context.Context, id int64) (*ContentDetail, *err
 	return &detail, nil
 }
 
-func (c *contentRepo) Find(ctx context.Context, params *biz.FindParams) (*[]*biz.Content, int64, *errors.Error) {
+func (c *contentRepo) Find(ctx context.Context, params *biz.FindParams) (*[]*biz.Content, int64, error) {
 	db := c.data.db
 	query := db.Model(&ContentDetail{})
 	if params.ID != 0 {

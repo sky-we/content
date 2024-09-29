@@ -30,6 +30,7 @@ func (app *AppService) CreateContent(ctx context.Context, req *operate.CreateCon
 	if err != nil {
 		return nil, err
 	}
+
 	return &operate.CreateContentRsp{
 		Id: ContentID,
 	}, nil

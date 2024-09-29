@@ -202,7 +202,7 @@ func (c *ContentFlow) updateColById(contentId int64, colName string, data any) e
 
 	_, err := c.client.UpdateContent(context.Background(), &operate.UpdateContentReq{
 		Content: content,
-	}, nil)
+	})
 
 	if err != nil {
 		return err

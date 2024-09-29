@@ -52,7 +52,7 @@ message CreateContentReq {
 }
 
 message CreateContentRsp {
-  int64 contentID = 1;
+  int64 id = 1;
 }
 
 // 更新
@@ -64,15 +64,16 @@ message UpdateContentRsp {}
 
 // 更新单列
 message UpdateContentColReq {
-  string colName = 1;
-  google.protobuf.Any data = 2;
+  int64 id  =1;
+  string colName = 2;
+  google.protobuf.Any data = 3;
 }
 
 message UpdateContentColRsp {}
 
 // 删除
 message DeleteContentReq {
-  int64 contentID = 1;
+  int64 id = 1;
 }
 
 message DeleteContentRsp {}
