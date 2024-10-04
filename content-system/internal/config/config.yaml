@@ -23,7 +23,7 @@ redisWin:
   DB: 0
 
 
-appClient:
+AppClient:
   host: "localhost"
   port: 9000
 
@@ -31,3 +31,7 @@ flowServiceClient:
   host: "localhost"
   port: 7088
   flowName: "content-flow"
+
+EtcdClient:
+  host: "localhost"
+  port: 2379

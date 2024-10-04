@@ -5,10 +5,11 @@ import (
 	"content-system/internal/middleware"
 	"context"
 	"fmt"
-	"github.com/go-kratos/kratos/v2/middleware/recovery"
+	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"sync"
@@ -54,13 +55,18 @@ type AppClientConfig struct {
 	Port int
 }
 
+type EtcdClientConfig struct {
+	Host string
+	Port int
+}
+
 type RequiredConfig struct {
-	// 工程依赖组件的配置
-	MySQL             *MysqlConfig
-	Redis             *RedisConfig
-	RedisWin          *RedisWinConfig
-	FlowServiceClient *FlowServiceClientConfig
-	AppClient         *AppClientConfig
+	MySQL       *MysqlConfig
+	Redis       *RedisConfig
+	RedisWin    *RedisWinConfig
+	FlowService *FlowServiceClientConfig
+	AppClient   *AppClientConfig
+	EtcdClient  *EtcdClientConfig
 }
 
 var (
@@ -124,19 +130,29 @@ func NewRdb(cfg *RedisConfig) *redis.Client {
 	return rdb
 }
 
-func NewAppClient(cfg *AppClientConfig) operate.AppClient {
-	endPoint := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
-	conn, err := grpc.DialInsecure(
-		context.Background(),
-		grpc.WithEndpoint(endPoint),
-		grpc.WithMiddleware(
-			recovery.Recovery(),
-		),
-		grpc.WithTimeout(time.Second*1000),
-	)
+func NewAppClient(cfg *EtcdClientConfig) operate.AppClient {
+	addr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
+
+	client, err := clientv3.New(clientv3.Config{
+		Endpoints: []string{addr},
+	})
 	if err != nil {
 		panic(err)
 	}
-	client := operate.NewAppClient(conn)
-	return client
+	dis := etcd.New(client)
+
+	endPoint := "discovery:///Content-System"
+
+	conn, err := grpc.DialInsecure(
+		context.Background(),
+		grpc.WithEndpoint(endPoint),
+		grpc.WithDiscovery(dis),
+		grpc.WithTimeout(time.Second*1000),
+	)
+
+	if err != nil {
+		panic(err)
+	}
+	appClient := operate.NewAppClient(conn)
+	return appClient
 }

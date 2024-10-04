@@ -6,10 +6,11 @@ import (
 	"content-flow/internal/process"
 	"context"
 	"fmt"
-	"github.com/go-kratos/kratos/v2/middleware/recovery"
+	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 	goflow "github.com/s8sg/goflow/v1"
 	"github.com/spf13/viper"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"sync"
 	"time"
 )
@@ -26,9 +27,15 @@ type AppClient struct {
 	Port int
 }
 
+type EtcdClient struct {
+	Host string
+	Port int
+}
+
 type Required struct {
 	FlowService *FlowService
 	AppClient   *AppClient
+	EtcdClient  *EtcdClient
 }
 
 var (
@@ -62,7 +69,7 @@ func NewFlowService(cfg *FlowService) *goflow.FlowService {
 		RedisURL:          cfg.RedisURL,
 		WorkerConcurrency: cfg.WorkerConcurrency,
 	}
-	client := NewAppClient(WireCfg.AppClient)
+	client := NewAppClient(WireCfg.EtcdClient)
 	contentFlow := process.NewContentFlow(client)
 	err := fs.Register(cfg.FlowName, contentFlow.ContentFlowHandle)
 	if err != nil {
@@ -72,19 +79,26 @@ func NewFlowService(cfg *FlowService) *goflow.FlowService {
 	return &fs
 }
 
-func NewAppClient(cfg *AppClient) operate.AppClient {
-	endPoint := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
+func NewAppClient(cfg *EtcdClient) operate.AppClient {
+	addr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
+	client, err := clientv3.New(clientv3.Config{
+		Endpoints: []string{addr},
+	})
+	if err != nil {
+		panic(err)
+	}
+	dis := etcd.New(client)
+
+	endPoint := "discovery:///Content-System"
 	conn, err := grpc.DialInsecure(
 		context.Background(),
 		grpc.WithEndpoint(endPoint),
-		grpc.WithMiddleware(
-			recovery.Recovery(),
-		),
+		grpc.WithDiscovery(dis),
 		grpc.WithTimeout(time.Second*1000),
 	)
 	if err != nil {
 		panic(err)
 	}
-	client := operate.NewAppClient(conn)
-	return client
+	appClient := operate.NewAppClient(conn)
+	return appClient
 }

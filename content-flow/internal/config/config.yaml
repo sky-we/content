@@ -8,3 +8,8 @@ flowService:
 AppClient:
   host: "localhost"
   port: 9000
+
+
+EtcdClient:
+  host: "localhost"
+  port: 2379
