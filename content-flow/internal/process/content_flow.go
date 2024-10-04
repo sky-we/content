@@ -65,6 +65,8 @@ func (c *ContentFlow) input(data []byte, options map[string][]string) ([]byte, e
 		return nil, err
 	}
 	id := int64(d["input"])
+
+	Logger.Infof("content id:[%d]", id)
 	detail, err := c.client.FindContent(context.Background(), &operate.FindContentReq{
 		Id: id,
 	})

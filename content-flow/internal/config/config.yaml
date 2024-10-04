@@ -4,12 +4,6 @@ flowService:
   workerConcurrency: 5
   flowName: "content-flow"
 
-
-AppClient:
-  host: "localhost"
-  port: 9000
-
-
-EtcdClient:
+Etcd:
   host: "localhost"
   port: 2379

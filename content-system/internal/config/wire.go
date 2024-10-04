@@ -60,19 +60,19 @@ type EtcdClientConfig struct {
 	Port int
 }
 
-type RequiredConfig struct {
-	MySQL       *MysqlConfig
-	Redis       *RedisConfig
-	RedisWin    *RedisWinConfig
-	FlowService *FlowServiceClientConfig
-	AppClient   *AppClientConfig
-	EtcdClient  *EtcdClientConfig
+type ClientConfig struct {
+	MySQL             *MysqlConfig
+	Redis             *RedisConfig
+	RedisWin          *RedisWinConfig
+	FlowServiceClient *FlowServiceClientConfig
+	AppClient         *AppClientConfig
+	EtcdClient        *EtcdClientConfig
 }
 
 var (
-	once     sync.Once
-	Required *RequiredConfig
-	Logger   = middleware.GetLogger()
+	once      sync.Once
+	ClientCfg *ClientConfig
+	Logger    = middleware.GetLogger()
 )
 
 func LoadDBConfig() {
@@ -87,7 +87,7 @@ func LoadDBConfig() {
 			panic(err)
 
 		}
-		if err := viper.Unmarshal(&Required); err != nil {
+		if err := viper.Unmarshal(&ClientCfg); err != nil {
 			Logger.Error("unable to decode into struct, %v", err)
 			panic(err)
 		}

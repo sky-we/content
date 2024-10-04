@@ -15,33 +15,27 @@ import (
 	"time"
 )
 
-type FlowService struct {
+type FlowServiceCfg struct {
 	Port              int
 	RedisURL          string
 	WorkerConcurrency int
 	FlowName          string
 }
 
-type AppClient struct {
+type EtcdCfg struct {
 	Host string
 	Port int
 }
 
-type EtcdClient struct {
-	Host string
-	Port int
-}
-
-type Required struct {
-	FlowService *FlowService
-	AppClient   *AppClient
-	EtcdClient  *EtcdClient
+type clientCfg struct {
+	FlowService *FlowServiceCfg
+	Etcd        *EtcdCfg
 }
 
 var (
-	once    sync.Once
-	WireCfg Required
-	Logger  = middleware.GetLogger()
+	once      sync.Once
+	ClientCfg clientCfg
+	Logger    = middleware.GetLogger()
 )
 
 func LoadFlowCfg() {
@@ -56,20 +50,20 @@ func LoadFlowCfg() {
 			panic(err)
 
 		}
-		if err := viper.Unmarshal(&WireCfg); err != nil {
+		if err := viper.Unmarshal(&ClientCfg); err != nil {
 			Logger.Error("unable to decode into struct, %v", err)
 			panic(err)
 		}
 	})
 }
 
-func NewFlowService(cfg *FlowService) *goflow.FlowService {
+func NewFlowService(cfg *FlowServiceCfg) *goflow.FlowService {
 	fs := goflow.FlowService{
 		Port:              cfg.Port,
 		RedisURL:          cfg.RedisURL,
 		WorkerConcurrency: cfg.WorkerConcurrency,
 	}
-	client := NewAppClient(WireCfg.EtcdClient)
+	client := NewAppClient(ClientCfg.Etcd)
 	contentFlow := process.NewContentFlow(client)
 	err := fs.Register(cfg.FlowName, contentFlow.ContentFlowHandle)
 	if err != nil {
@@ -79,7 +73,7 @@ func NewFlowService(cfg *FlowService) *goflow.FlowService {
 	return &fs
 }
 
-func NewAppClient(cfg *EtcdClient) operate.AppClient {
+func NewAppClient(cfg *EtcdCfg) operate.AppClient {
 	addr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
 	client, err := clientv3.New(clientv3.Config{
 		Endpoints: []string{addr},

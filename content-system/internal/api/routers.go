@@ -13,9 +13,9 @@ const (
 )
 
 func CmsRouters(r *gin.Engine) {
-	db := config.NewMySqlDB(config.Required.MySQL)
-	rdb := config.NewRdb(config.Required.Redis)
-	appClient := config.NewAppClient(config.Required.EtcdClient)
+	db := config.NewMySqlDB(config.ClientCfg.MySQL)
+	rdb := config.NewRdb(config.ClientCfg.Redis)
+	appClient := config.NewAppClient(config.ClientCfg.EtcdClient)
 
 	// 依赖注入
 	cmsApp := services.NewCmsApp(db, rdb, appClient)

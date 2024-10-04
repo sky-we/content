@@ -64,7 +64,7 @@ func (app *CmsApp) ContentCreate(ctx *gin.Context) {
 
 	// 数据加工开始
 	go func() {
-		if err := app.startContentFlow(rsp.Id, config.Required.FlowService); err != nil {
+		if err := app.startContentFlow(rsp.Id, config.ClientCfg.FlowServiceClient); err != nil {
 			Logger.Errorf("start content flow error %v", err)
 		}
 	}()
