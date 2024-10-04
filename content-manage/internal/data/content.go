@@ -2,6 +2,7 @@ package data
 
 import (
 	"content-manage/internal/biz"
+	"content-manage/utils"
 	"context"
 	"fmt"
 	"github.com/go-kratos/kratos/v2/errors"
@@ -17,7 +18,8 @@ type contentRepo struct {
 }
 
 type ContentDetail struct {
-	ID             int64         `gorm:"column:id;primary_key"`  // 内容ID
+	ID             int64         `gorm:"column:id;primary_key"`  // 自增ID
+	ContentId      string        `gorm:"column:content_id"`      // 内容ID
 	Title          string        `gorm:"column:title"`           // 内容标题
 	Description    string        `gorm:"column:description"`     // 内容描述
 	Author         string        `gorm:"column:author"`          // 作者
@@ -34,9 +36,17 @@ type ContentDetail struct {
 	CreatedAt      time.Time     `gorm:"column:created_at"`      // 内容创建时间
 }
 
-func (c *ContentDetail) TableName() string {
-	return "cms_content.content_details"
+type IdxContentDetail struct {
+	ID        int64     `gorm:"column:id;primary_key"` // 自增ID
+	ContentID string    `gorm:"column:content_id"`     // 内容ID
+	Title     string    `gorm:"column:title"`          // 内容标题
+	Author    string    `gorm:"column:author"`         // 作者
+	UpdatedAt time.Time `gorm:"column:updated_at"`     // 内容更新时间
+	CreatedAt time.Time `gorm:"column:created_at"`     // 内容创建时间
+}
 
+func (c IdxContentDetail) TableName() string {
+	return "cms_content.idx_content_details"
 }
 
 func NewContentRepo(data *Data, logger log.Logger) biz.ContentRepo {
@@ -45,10 +55,25 @@ func NewContentRepo(data *Data, logger log.Logger) biz.ContentRepo {
 		log:  log.NewHelper(logger),
 	}
 }
-
-func (c *contentRepo) Create(ctx context.Context, content *biz.Content) (contentID int64, err error) {
+func getContentDetailsTable(contentID string) string {
+	idx := utils.GenIdx(contentID, 4)
+	log.Infof("content_id = %s, tableIdx = %d", contentID, idx)
+	return fmt.Sprintf("cms_content.content_details_%d", idx)
+}
+func (c *contentRepo) Create(ctx context.Context, content *biz.Content) (int64, error) {
 	db := c.data.db
-	repeat, err := c.IsVideoRepeat(ctx, content.VideoURL)
+	tableName := getContentDetailsTable(content.ContentId)
+	idx := IdxContentDetail{
+		ContentID: content.ContentId,
+		Title:     content.Title,
+		Author:    content.Author,
+	}
+
+	if err := db.Create(&idx).Error; err != nil {
+		return 0, err
+	}
+
+	repeat, err := c.IsVideoRepeat(ctx, tableName, content.VideoURL)
 	if err != nil {
 		return 0, errors.New(http.StatusInternalServerError, "SERVER_INTER_ERROR", fmt.Sprintf("创建失败，内部服务器错误：%s", err))
 	}
@@ -57,6 +82,7 @@ func (c *contentRepo) Create(ctx context.Context, content *biz.Content) (content
 		return 0, errors.New(http.StatusBadRequest, "VIDEO_URL_REPEAT", fmt.Sprintf("[video_url=%s]内容已存在", content.VideoURL))
 	}
 	detail := &ContentDetail{
+		ContentId:      content.ContentId,
 		Title:          content.Title,
 		Description:    content.Description,
 		Author:         content.Author,
@@ -72,7 +98,10 @@ func (c *contentRepo) Create(ctx context.Context, content *biz.Content) (content
 		UpdatedAt:      time.Time{},
 		CreatedAt:      time.Time{},
 	}
-	if err := db.Create(&detail).Error; err != nil {
+	//if err := db.Create(&detail).Error; err != nil {
+	//	return 0, errors.New(http.StatusInternalServerError, "Create Content Failed", err.Error())
+	//}
+	if err := db.Table(tableName).Create(&detail).Error; err != nil {
 		return 0, errors.New(http.StatusInternalServerError, "Create Content Failed", err.Error())
 	}
 	return detail.ID, nil
@@ -80,7 +109,16 @@ func (c *contentRepo) Create(ctx context.Context, content *biz.Content) (content
 
 func (c *contentRepo) Update(ctx context.Context, id int64, content *biz.Content) error {
 	db := c.data.db
-	exists, err := c.IsExist(ctx, id)
+
+	var idx IdxContentDetail
+	if err := db.Where("id = ?", id).First(&idx).Error; err != nil {
+		log.Infof("get content id by ID %d", idx.ID)
+		return errors.New(http.StatusInternalServerError, "Get Content ID Failed", err.Error())
+	}
+	tableName := getContentDetailsTable(idx.ContentID)
+
+	exists, err := c.IsContentExist(ctx, tableName, idx.ContentID)
+
 	if err != nil {
 		return errors.New(http.StatusInternalServerError, "Update Content Failed", err.Error())
 	}
@@ -89,6 +127,7 @@ func (c *contentRepo) Update(ctx context.Context, id int64, content *biz.Content
 		return errors.New(http.StatusBadRequest, "ID_NOT_EXIST", fmt.Sprintf("content ID %d is not exist", id))
 	}
 	detail := &ContentDetail{
+		ContentId:      content.ContentId,
 		Title:          content.Title,
 		Description:    content.Description,
 		Author:         content.Author,
@@ -104,7 +143,7 @@ func (c *contentRepo) Update(ctx context.Context, id int64, content *biz.Content
 		UpdatedAt:      time.Now(),
 		CreatedAt:      time.Now(),
 	}
-	if err := db.Where("id = ?", id).Updates(&detail).Error; err != nil {
+	if err := db.Table(tableName).Where("id = ?", id).Updates(&detail).Error; err != nil {
 		return errors.New(http.StatusInternalServerError, "Update Content Failed", err.Error())
 	}
 	return nil
@@ -112,7 +151,14 @@ func (c *contentRepo) Update(ctx context.Context, id int64, content *biz.Content
 
 func (c *contentRepo) UpdateCol(ctx context.Context, id int64, colName string, data any) error {
 	db := c.data.db
-	exists, err := c.IsExist(ctx, id)
+	var idx IdxContentDetail
+	if err := db.Where("id = ?", id).First(&idx).Error; err != nil {
+		log.Infof("get content id by ID %d", idx.ID)
+		return errors.New(http.StatusInternalServerError, "Get Content ID Failed", err.Error())
+	}
+	tableName := getContentDetailsTable(idx.ContentID)
+
+	exists, err := c.IsContentExist(ctx, tableName, idx.ContentID)
 	if err != nil {
 		return errors.New(http.StatusInternalServerError, "Update Content col Failed", err.Error())
 	}
@@ -127,7 +173,13 @@ func (c *contentRepo) UpdateCol(ctx context.Context, id int64, colName string, d
 
 func (c *contentRepo) Delete(ctx context.Context, id int64) error {
 	db := c.data.db
-	exists, err := c.IsExist(ctx, id)
+	var idx IdxContentDetail
+	if err := db.Where("id = ?", id).First(&idx).Error; err != nil {
+		log.Infof("get content id by ID %d", idx.ID)
+		return errors.New(http.StatusInternalServerError, "Get Content ID Failed", err.Error())
+	}
+	tableName := getContentDetailsTable(idx.ContentID)
+	exists, err := c.IsContentExist(ctx, tableName, idx.ContentID)
 	if err != nil {
 		return err
 	}
@@ -142,9 +194,9 @@ func (c *contentRepo) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (c *contentRepo) IsExist(ctx context.Context, id int64) (bool, error) {
+func (c *contentRepo) IsContentExist(ctx context.Context, tableName string, ContentID string) (bool, error) {
 	db := c.data.db
-	if err := db.Where("id = ?", id).First(&ContentDetail{}).Error; err != nil {
+	if err := db.Table(tableName).Where("content_id = ?", ContentID).First(&ContentDetail{}).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return false, errors.New(http.StatusInternalServerError, "Query Content By ID Failed", err.Error())
 
@@ -154,10 +206,10 @@ func (c *contentRepo) IsExist(ctx context.Context, id int64) (bool, error) {
 	return true, nil
 }
 
-func (c *contentRepo) IsVideoRepeat(ctx context.Context, videoUrl string) (bool, error) {
+func (c *contentRepo) IsVideoRepeat(ctx context.Context, tableName string, videoUrl string) (bool, error) {
 	db := c.data.db
 	var contentDetail ContentDetail
-	err := db.Where("video_url = ?", videoUrl).First(&contentDetail).Error
+	err := db.Table(tableName).Where("video_url = ?", videoUrl).First(&contentDetail).Error
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return false, nil
@@ -214,6 +266,7 @@ func (c *contentRepo) Find(ctx context.Context, params *biz.FindParams) (*[]*biz
 	var bizContent []*biz.Content
 	for _, detail := range contentDetails {
 		bizContent = append(bizContent, &biz.Content{
+			ContentId:      detail.ContentId,
 			ID:             detail.ID,
 			Title:          detail.Title,
 			Description:    detail.Description,

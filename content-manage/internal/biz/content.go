@@ -7,7 +7,8 @@ import (
 )
 
 type Content struct {
-	ID             int64         `json:"id"`              // 内容ID
+	ID             int64         `json:"id"`              // 自增ID
+	ContentId      string        `json:"content_id"`      // 内容ID
 	Title          string        `json:"title"`           // 内容标题
 	Description    string        `json:"description"`     // 内容描述
 	Author         string        `json:"author"`          // 作者

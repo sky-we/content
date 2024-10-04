@@ -113,8 +113,8 @@ func (c *ContentFlow) category(data []byte, options map[string][]string) ([]byte
 	if err := json.Unmarshal(data, &input); err != nil {
 		return nil, err
 	}
-	contentId := int64(input["id"].(float64))
-	err := c.updateColById(contentId, "Category", "category-workflow")
+	contentID := int64(input["id"].(float64))
+	err := c.updateColById(contentID, "Category", "category-workflow")
 	if err != nil {
 		return nil, err
 	}
@@ -126,8 +126,8 @@ func (c *ContentFlow) thumbnail(data []byte, options map[string][]string) ([]byt
 	if err := json.Unmarshal(data, &input); err != nil {
 		return nil, err
 	}
-	contentId := int64(input["id"].(float64))
-	err := c.updateColById(contentId, "Thumbnail", "thumbnail-workflow")
+	contentID := int64(input["id"].(float64))
+	err := c.updateColById(contentID, "Thumbnail", "thumbnail-workflow")
 	if err != nil {
 		return nil, err
 	}
@@ -139,8 +139,8 @@ func (c *ContentFlow) format(data []byte, options map[string][]string) ([]byte, 
 	if err := json.Unmarshal(data, &input); err != nil {
 		return nil, err
 	}
-	contentId := int64(input["id"].(float64))
-	err := c.updateColById(contentId, "Format", "format-workflow")
+	contentID := int64(input["id"].(float64))
+	err := c.updateColById(contentID, "Format", "format-workflow")
 	if err != nil {
 		return nil, err
 	}
@@ -165,10 +165,10 @@ func (c *ContentFlow) fail(data []byte, options map[string][]string) ([]byte, er
 	if err := json.Unmarshal(data, &input); err != nil {
 		return nil, err
 	}
-	contentId := int64(input["id"].(float64))
+	contentID := int64(input["id"].(float64))
 	// 审核失败
 
-	if err := c.updateColById(contentId, "ApprovalStatus", int32(3)); err != nil {
+	if err := c.updateColById(contentID, "ApprovalStatus", int32(3)); err != nil {
 		return nil, err
 	}
 	return data, nil
@@ -180,10 +180,10 @@ func (c *ContentFlow) finish(data []byte, options map[string][]string) ([]byte, 
 	return data, nil
 }
 
-func (c *ContentFlow) updateColById(contentId int64, colName string, data any) error {
+func (c *ContentFlow) updateColById(contentID int64, colName string, data any) error {
 
 	content := &operate.Content{
-		ID:             contentId,
+		ID:             contentID,
 		Title:          "",
 		VideoURL:       "",
 		Author:         "",
