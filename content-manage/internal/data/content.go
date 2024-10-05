@@ -55,14 +55,14 @@ func NewContentRepo(data *Data, logger log.Logger) biz.ContentRepo {
 		log:  log.NewHelper(logger),
 	}
 }
-func getContentDetailsTable(contentID string) string {
+func getShardTableName(contentID string) string {
 	idx := utils.GenIdx(contentID, 4)
 	log.Infof("content_id = %s, tableIdx = %d", contentID, idx)
 	return fmt.Sprintf("cms_content.content_details_%d", idx)
 }
 func (c *contentRepo) Create(ctx context.Context, content *biz.Content) (int64, error) {
 	db := c.data.db
-	tableName := getContentDetailsTable(content.ContentId)
+	tableName := getShardTableName(content.ContentId)
 	idx := IdxContentDetail{
 		ContentID: content.ContentId,
 		Title:     content.Title,
@@ -115,7 +115,7 @@ func (c *contentRepo) Update(ctx context.Context, id int64, content *biz.Content
 		log.Infof("get content id by ID %d", idx.ID)
 		return errors.New(http.StatusInternalServerError, "Get Content ID Failed", err.Error())
 	}
-	tableName := getContentDetailsTable(idx.ContentID)
+	tableName := getShardTableName(idx.ContentID)
 
 	exists, err := c.IsContentExist(ctx, tableName, idx.ContentID)
 
@@ -156,7 +156,7 @@ func (c *contentRepo) UpdateCol(ctx context.Context, id int64, colName string, d
 		log.Infof("get content id by ID %d", idx.ID)
 		return errors.New(http.StatusInternalServerError, "Get Content ID Failed", err.Error())
 	}
-	tableName := getContentDetailsTable(idx.ContentID)
+	tableName := getShardTableName(idx.ContentID)
 
 	exists, err := c.IsContentExist(ctx, tableName, idx.ContentID)
 	if err != nil {
@@ -178,7 +178,7 @@ func (c *contentRepo) Delete(ctx context.Context, id int64) error {
 		log.Infof("get content id by ID %d", idx.ID)
 		return errors.New(http.StatusInternalServerError, "Get Content ID Failed", err.Error())
 	}
-	tableName := getContentDetailsTable(idx.ContentID)
+	tableName := getShardTableName(idx.ContentID)
 	exists, err := c.IsContentExist(ctx, tableName, idx.ContentID)
 	if err != nil {
 		return err
@@ -221,10 +221,12 @@ func (c *contentRepo) IsVideoRepeat(ctx context.Context, tableName string, video
 	return true, nil
 }
 
-func (c *contentRepo) First(ctx context.Context, id int64) (*ContentDetail, error) {
+func (c *contentRepo) First(ctx context.Context, contentId string) (*ContentDetail, error) {
 	db := c.data.db
 	var detail ContentDetail
-	err := db.Where("id = ?", id).First(&detail).Error
+	tableName := getShardTableName(contentId)
+
+	err := db.Table(tableName).Where("content_id = ?", contentId).First(&detail).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -233,10 +235,40 @@ func (c *contentRepo) First(ctx context.Context, id int64) (*ContentDetail, erro
 	}
 	return &detail, nil
 }
-
 func (c *contentRepo) Find(ctx context.Context, params *biz.FindParams) (*[]*biz.Content, int64, error) {
+	contentIdxMap, total, err := c.FindContentId(ctx, params)
+	if err != nil {
+		return nil, 0, err
+	}
+	var contents []*biz.Content
+	for _, idxMap := range contentIdxMap {
+		contentDetail, getContentDetailErr := c.First(ctx, idxMap.ContentId)
+		if getContentDetailErr != nil {
+			return nil, 0, getContentDetailErr
+		}
+		contents = append(contents, &biz.Content{
+			Title:          contentDetail.Title,
+			Description:    contentDetail.Description,
+			Author:         contentDetail.Author,
+			VideoURL:       contentDetail.VideoURL,
+			Thumbnail:      contentDetail.Thumbnail,
+			Category:       contentDetail.Category,
+			Duration:       contentDetail.Duration,
+			Resolution:     contentDetail.Resolution,
+			FileSize:       contentDetail.FileSize,
+			Format:         contentDetail.Format,
+			Quality:        contentDetail.Quality,
+			ApprovalStatus: contentDetail.ApprovalStatus,
+			UpdatedAt:      contentDetail.UpdatedAt,
+			CreatedAt:      contentDetail.CreatedAt,
+		})
+	}
+	return &contents, total, nil
+}
+
+func (c *contentRepo) FindContentId(ctx context.Context, params *biz.FindParams) ([]*biz.ContentIndex, int64, error) {
 	db := c.data.db
-	query := db.Model(&ContentDetail{})
+	query := db.Model(&IdxContentDetail{})
 	if params.ID != 0 {
 		query = query.Where("id = ?", params.ID)
 	}
@@ -259,28 +291,16 @@ func (c *contentRepo) Find(ctx context.Context, params *biz.FindParams) (*[]*biz
 		pageSize = int(params.PageSize)
 	}
 	offset := (page - 1) * pageSize
-	var contentDetails []*ContentDetail
-	if err := query.Offset(offset).Limit(pageSize).Find(&contentDetails).Error; err != nil {
+	var IdxContentDetails []*IdxContentDetail
+	if err := query.Offset(offset).Limit(pageSize).Find(&IdxContentDetails).Error; err != nil {
 		return nil, 0, errors.New(http.StatusInternalServerError, "Find Content Failed", err.Error())
 	}
-	var bizContent []*biz.Content
-	for _, detail := range contentDetails {
-		bizContent = append(bizContent, &biz.Content{
-			ContentId:      detail.ContentId,
-			ID:             detail.ID,
-			Title:          detail.Title,
-			Description:    detail.Description,
-			Author:         detail.Author,
-			VideoURL:       detail.VideoURL,
-			Thumbnail:      detail.Thumbnail,
-			Category:       detail.Category,
-			Duration:       detail.Duration,
-			Resolution:     detail.Resolution,
-			FileSize:       detail.FileSize,
-			Format:         detail.Format,
-			Quality:        detail.Quality,
-			ApprovalStatus: detail.ApprovalStatus,
+	var contentIdx []*biz.ContentIndex
+	for _, detail := range IdxContentDetails {
+		contentIdx = append(contentIdx, &biz.ContentIndex{
+			ContentId: detail.ContentID,
+			ID:        detail.ID,
 		})
 	}
-	return &bizContent, cnt, nil
+	return contentIdx, cnt, nil
 }

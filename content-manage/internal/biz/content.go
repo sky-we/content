@@ -24,7 +24,10 @@ type Content struct {
 	UpdatedAt      time.Time     `json:"updated_at"`      // 内容更新时间
 	CreatedAt      time.Time     `json:"created_at"`      // 内容创建时间
 }
-
+type ContentIndex struct {
+	ID        int64  `json:"id"`         // 自增ID
+	ContentId string `json:"content_id"` // 内容ID
+}
 type FindParams struct {
 	ID       int64
 	Author   string
