@@ -3,8 +3,6 @@ flowService:
   port: 7088
   workerConcurrency: 5
   flowName: "content-flow"
-  RequestReadTimeout: 1
-  RequestWriteTimeout: 1
 
 Etcd:
   host: "localhost"
