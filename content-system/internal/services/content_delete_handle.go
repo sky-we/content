@@ -10,7 +10,7 @@ import (
 )
 
 type ContentDeleteReq struct {
-	ID int64 `json:"id" binding:"required"`
+	IdxID int64 `json:"id" binding:"required"`
 }
 
 type ContentDeleteRsp struct {
@@ -25,7 +25,7 @@ func (app *CmsApp) ContentDelete(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"Message": "参数错误", "error": err.Error()})
 		return
 	}
-	_, err := app.operateAppClient.DeleteContent(context.Background(), &operate.DeleteContentReq{Id: contentDeleteReq.ID})
+	_, err := app.operateAppClient.DeleteContent(context.Background(), &operate.DeleteContentReq{IdxID: contentDeleteReq.IdxID})
 	if err != nil {
 		ctx.AbortWithStatusJSON(errors.Code(err), gin.H{"Message": err.Error()})
 		return
@@ -33,7 +33,7 @@ func (app *CmsApp) ContentDelete(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, ContentDeleteRsp{
 		Code: 0,
 		Msg:  "success",
-		Data: fmt.Sprintf("Content ID %d deleted", contentDeleteReq.ID),
+		Data: fmt.Sprintf("Content ID %d deleted", contentDeleteReq.IdxID),
 	})
 
 }

@@ -16,10 +16,12 @@ import (
 )
 
 type FlowServiceCfg struct {
-	Port              int
-	RedisURL          string
-	WorkerConcurrency int
-	FlowName          string
+	Port                int
+	RedisURL            string
+	WorkerConcurrency   int
+	FlowName            string
+	RequestReadTimeout  time.Duration
+	RequestWriteTimeout time.Duration
 }
 
 type EtcdCfg struct {
@@ -59,9 +61,11 @@ func LoadFlowCfg() {
 
 func NewFlowService(cfg *FlowServiceCfg) *goflow.FlowService {
 	fs := goflow.FlowService{
-		Port:              cfg.Port,
-		RedisURL:          cfg.RedisURL,
-		WorkerConcurrency: cfg.WorkerConcurrency,
+		Port:                cfg.Port,
+		RedisURL:            cfg.RedisURL,
+		WorkerConcurrency:   cfg.WorkerConcurrency,
+		RequestWriteTimeout: cfg.RequestWriteTimeout * time.Hour,
+		RequestReadTimeout:  cfg.RequestReadTimeout * time.Hour,
 	}
 	client := NewAppClient(ClientCfg.Etcd)
 	contentFlow := process.NewContentFlow(client)

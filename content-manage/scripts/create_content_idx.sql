@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS t_idx_content_details (
+CREATE TABLE IF NOT EXISTS idx_content_details (
                                                      id BIGINT NOT NULL AUTO_INCREMENT,
                                                      content_id VARCHAR(255) DEFAULT '' COMMENT '内容ID',
     title VARCHAR(255) DEFAULT '' COMMENT '内容标题',

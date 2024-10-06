@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
+	"golang.org/x/sync/errgroup"
 	"gorm.io/gorm"
 	"net/http"
 	"time"
@@ -98,36 +99,94 @@ func (c *contentRepo) Create(ctx context.Context, content *biz.Content) (int64, 
 		UpdatedAt:      time.Time{},
 		CreatedAt:      time.Time{},
 	}
-	//if err := db.Create(&detail).Error; err != nil {
-	//	return 0, errors.New(http.StatusInternalServerError, "Create Content Failed", err.Error())
-	//}
 	if err := db.Table(tableName).Create(&detail).Error; err != nil {
 		return 0, errors.New(http.StatusInternalServerError, "Create Content Failed", err.Error())
 	}
-	return detail.ID, nil
+	return idx.ID, nil
 }
 
-func (c *contentRepo) Update(ctx context.Context, id int64, content *biz.Content) error {
+func (c *contentRepo) Delete(ctx context.Context, idxID int64) error {
 	db := c.data.db
+	contentID, err := c.GetContentIDByIdxID(idxID)
+	if err != nil {
+		return errors.New(http.StatusBadRequest, "ID_NOT_EXIST", fmt.Sprintf("content ID %d is not exist", idxID))
 
-	var idx IdxContentDetail
-	if err := db.Where("id = ?", id).First(&idx).Error; err != nil {
-		log.Infof("get content id by ID %d", idx.ID)
+	}
+	tableName := getShardTableName(contentID)
+	exists, err := c.IsContentExist(ctx, tableName, contentID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return errors.New(http.StatusBadRequest, "ID_NOT_EXIST", fmt.Sprintf("content ID %d is not exist", idxID))
+	}
+	if err := db.Table(tableName).Where("content_id = ?", contentID).Delete(&ContentDetail{}).Error; err != nil {
+		return errors.New(http.StatusInternalServerError, "DELETE_CONTENT_FAIL", "Delete failed")
+	}
+	if err := db.Where("id = ?", idxID).Delete(&IdxContentDetail{}).Error; err != nil {
+		return errors.New(http.StatusInternalServerError, "DELETE_CONTENT_IDX_FAIL", "Delete failed")
+	}
+	return nil
+}
+
+func (c *contentRepo) Find(ctx context.Context, params *biz.FindParams) (*[]*biz.Content, error) {
+	contentIdxMap, findErr := c.FindContentIdx(ctx, params)
+	if findErr != nil {
+		return nil, findErr
+	}
+	var contents []*biz.Content
+	var eg errgroup.Group
+	for _, idxMap := range contentIdxMap {
+		eg.Go(func() error {
+			contentDetail, getContentDetailErr := c.First(ctx, idxMap.ContentId)
+			if getContentDetailErr != nil {
+				return getContentDetailErr
+			}
+			contents = append(contents, &biz.Content{
+				ID:             idxMap.ID,
+				ContentId:      idxMap.ContentId,
+				Title:          contentDetail.Title,
+				Description:    contentDetail.Description,
+				Author:         contentDetail.Author,
+				VideoURL:       contentDetail.VideoURL,
+				Thumbnail:      contentDetail.Thumbnail,
+				Category:       contentDetail.Category,
+				Duration:       contentDetail.Duration,
+				Resolution:     contentDetail.Resolution,
+				FileSize:       contentDetail.FileSize,
+				Format:         contentDetail.Format,
+				Quality:        contentDetail.Quality,
+				ApprovalStatus: contentDetail.ApprovalStatus,
+				UpdatedAt:      contentDetail.UpdatedAt,
+				CreatedAt:      contentDetail.CreatedAt,
+			})
+			return nil
+		})
+		if err := eg.Wait(); err != nil {
+			return nil, err
+		}
+
+	}
+	return &contents, nil
+}
+
+func (c *contentRepo) Update(ctx context.Context, idxID int64, content *biz.Content) error {
+	db := c.data.db
+	contentID, err := c.GetContentIDByIdxID(idxID)
+	if err != nil {
 		return errors.New(http.StatusInternalServerError, "Get Content ID Failed", err.Error())
 	}
-	tableName := getShardTableName(idx.ContentID)
+	tableName := getShardTableName(contentID)
 
-	exists, err := c.IsContentExist(ctx, tableName, idx.ContentID)
+	exists, err := c.IsContentExist(ctx, tableName, contentID)
 
 	if err != nil {
 		return errors.New(http.StatusInternalServerError, "Update Content Failed", err.Error())
 	}
 	if !exists {
-
-		return errors.New(http.StatusBadRequest, "ID_NOT_EXIST", fmt.Sprintf("content ID %d is not exist", id))
+		return errors.New(http.StatusBadRequest, "ID_NOT_EXIST", fmt.Sprintf("content ID %d is not exist", idxID))
 	}
 	detail := &ContentDetail{
-		ContentId:      content.ContentId,
 		Title:          content.Title,
 		Description:    content.Description,
 		Author:         content.Author,
@@ -143,53 +202,8 @@ func (c *contentRepo) Update(ctx context.Context, id int64, content *biz.Content
 		UpdatedAt:      time.Now(),
 		CreatedAt:      time.Now(),
 	}
-	if err := db.Table(tableName).Where("id = ?", id).Updates(&detail).Error; err != nil {
+	if err := db.Table(tableName).Where("content_id = ?", contentID).Updates(&detail).Error; err != nil {
 		return errors.New(http.StatusInternalServerError, "Update Content Failed", err.Error())
-	}
-	return nil
-}
-
-func (c *contentRepo) UpdateCol(ctx context.Context, id int64, colName string, data any) error {
-	db := c.data.db
-	var idx IdxContentDetail
-	if err := db.Where("id = ?", id).First(&idx).Error; err != nil {
-		log.Infof("get content id by ID %d", idx.ID)
-		return errors.New(http.StatusInternalServerError, "Get Content ID Failed", err.Error())
-	}
-	tableName := getShardTableName(idx.ContentID)
-
-	exists, err := c.IsContentExist(ctx, tableName, idx.ContentID)
-	if err != nil {
-		return errors.New(http.StatusInternalServerError, "Update Content col Failed", err.Error())
-	}
-	if !exists {
-		return errors.New(http.StatusBadRequest, "ID_NOT_EXIST", fmt.Sprintf("content ID %d is not exist", id))
-	}
-	if err := db.Where("id = ", id).Update(colName, data).Error; err != nil {
-		return errors.New(http.StatusInternalServerError, "Update Content col Failed", err.Error())
-	}
-	return nil
-}
-
-func (c *contentRepo) Delete(ctx context.Context, id int64) error {
-	db := c.data.db
-	var idx IdxContentDetail
-	if err := db.Where("id = ?", id).First(&idx).Error; err != nil {
-		log.Infof("get content id by ID %d", idx.ID)
-		return errors.New(http.StatusInternalServerError, "Get Content ID Failed", err.Error())
-	}
-	tableName := getShardTableName(idx.ContentID)
-	exists, err := c.IsContentExist(ctx, tableName, idx.ContentID)
-	if err != nil {
-		return err
-	}
-	if !exists {
-
-		return errors.New(http.StatusBadRequest, "ID_NOT_EXIST", fmt.Sprintf("content ID %d is not exist", id))
-	}
-	if err := db.Where("id = ?", id).Delete(&ContentDetail{}).Error; err != nil {
-
-		return errors.New(http.StatusInternalServerError, "DELETE_FAIL", "Delete failed")
 	}
 	return nil
 }
@@ -235,38 +249,8 @@ func (c *contentRepo) First(ctx context.Context, contentId string) (*ContentDeta
 	}
 	return &detail, nil
 }
-func (c *contentRepo) Find(ctx context.Context, params *biz.FindParams) (*[]*biz.Content, int64, error) {
-	contentIdxMap, total, err := c.FindContentId(ctx, params)
-	if err != nil {
-		return nil, 0, err
-	}
-	var contents []*biz.Content
-	for _, idxMap := range contentIdxMap {
-		contentDetail, getContentDetailErr := c.First(ctx, idxMap.ContentId)
-		if getContentDetailErr != nil {
-			return nil, 0, getContentDetailErr
-		}
-		contents = append(contents, &biz.Content{
-			Title:          contentDetail.Title,
-			Description:    contentDetail.Description,
-			Author:         contentDetail.Author,
-			VideoURL:       contentDetail.VideoURL,
-			Thumbnail:      contentDetail.Thumbnail,
-			Category:       contentDetail.Category,
-			Duration:       contentDetail.Duration,
-			Resolution:     contentDetail.Resolution,
-			FileSize:       contentDetail.FileSize,
-			Format:         contentDetail.Format,
-			Quality:        contentDetail.Quality,
-			ApprovalStatus: contentDetail.ApprovalStatus,
-			UpdatedAt:      contentDetail.UpdatedAt,
-			CreatedAt:      contentDetail.CreatedAt,
-		})
-	}
-	return &contents, total, nil
-}
 
-func (c *contentRepo) FindContentId(ctx context.Context, params *biz.FindParams) ([]*biz.ContentIndex, int64, error) {
+func (c *contentRepo) FindContentIdx(ctx context.Context, params *biz.FindParams) ([]*biz.ContentIndex, error) {
 	db := c.data.db
 	query := db.Model(&IdxContentDetail{})
 	if params.ID != 0 {
@@ -279,8 +263,8 @@ func (c *contentRepo) FindContentId(ctx context.Context, params *biz.FindParams)
 		query = query.Where("title = ?", params.Title)
 	}
 
-	var cnt int64
-	query.Count(&cnt)
+	//var cnt int64
+	//query.Count(&cnt)
 
 	var page, pageSize = 1, 10
 
@@ -293,7 +277,7 @@ func (c *contentRepo) FindContentId(ctx context.Context, params *biz.FindParams)
 	offset := (page - 1) * pageSize
 	var IdxContentDetails []*IdxContentDetail
 	if err := query.Offset(offset).Limit(pageSize).Find(&IdxContentDetails).Error; err != nil {
-		return nil, 0, errors.New(http.StatusInternalServerError, "Find Content Failed", err.Error())
+		return nil, errors.New(http.StatusInternalServerError, "Find Content Failed", err.Error())
 	}
 	var contentIdx []*biz.ContentIndex
 	for _, detail := range IdxContentDetails {
@@ -302,5 +286,15 @@ func (c *contentRepo) FindContentId(ctx context.Context, params *biz.FindParams)
 			ID:        detail.ID,
 		})
 	}
-	return contentIdx, cnt, nil
+	return contentIdx, nil
+}
+
+func (c *contentRepo) GetContentIDByIdxID(idxID int64) (string, error) {
+	db := c.data.db
+	var idxContentDetail IdxContentDetail
+
+	if err := db.Where("id = ?", idxID).First(&idxContentDetail).Error; err != nil {
+		return "", err
+	}
+	return idxContentDetail.ContentID, nil
 }

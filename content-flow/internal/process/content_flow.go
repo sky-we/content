@@ -45,7 +45,7 @@ func (c *ContentFlow) ContentFlowHandle(workflow *flow.Workflow, context *flow.C
 	)
 	branches["category"].Node("category", c.category)
 	branches["thumbnail"].Node("thumbnail", c.thumbnail)
-	branches["pass"].Node("category", c.pass)
+	branches["pass"].Node("pass", c.pass)
 	branches["format"].Node("format", c.format)
 	branches["fail"].Node("fail", c.fail)
 
@@ -68,7 +68,7 @@ func (c *ContentFlow) input(data []byte, options map[string][]string) ([]byte, e
 
 	Logger.Infof("content id:[%d]", id)
 	detail, err := c.client.FindContent(context.Background(), &operate.FindContentReq{
-		Id: id,
+		IdxID: id,
 	})
 	if err != nil {
 		return nil, err
@@ -113,8 +113,8 @@ func (c *ContentFlow) category(data []byte, options map[string][]string) ([]byte
 	if err := json.Unmarshal(data, &input); err != nil {
 		return nil, err
 	}
-	contentID := int64(input["id"].(float64))
-	err := c.updateColById(contentID, "Category", "category-workflow")
+	ContentIdxID := int64(input["id"].(float64))
+	err := c.updateColById(ContentIdxID, "Category", "category-workflow")
 	if err != nil {
 		return nil, err
 	}
@@ -126,8 +126,8 @@ func (c *ContentFlow) thumbnail(data []byte, options map[string][]string) ([]byt
 	if err := json.Unmarshal(data, &input); err != nil {
 		return nil, err
 	}
-	contentID := int64(input["id"].(float64))
-	err := c.updateColById(contentID, "Thumbnail", "thumbnail-workflow")
+	ContentIdxID := int64(input["id"].(float64))
+	err := c.updateColById(ContentIdxID, "Thumbnail", "thumbnail-workflow")
 	if err != nil {
 		return nil, err
 	}
@@ -139,8 +139,8 @@ func (c *ContentFlow) format(data []byte, options map[string][]string) ([]byte, 
 	if err := json.Unmarshal(data, &input); err != nil {
 		return nil, err
 	}
-	contentID := int64(input["id"].(float64))
-	err := c.updateColById(contentID, "Format", "format-workflow")
+	ContentIdxID := int64(input["id"].(float64))
+	err := c.updateColById(ContentIdxID, "Format", "format-workflow")
 	if err != nil {
 		return nil, err
 	}
@@ -152,9 +152,9 @@ func (c *ContentFlow) pass(data []byte, option map[string][]string) ([]byte, err
 	if err := json.Unmarshal(data, &input); err != nil {
 		return nil, err
 	}
-	contentID := int64(input["id"].(float64))
+	ContentIdxID := int64(input["id"].(float64))
 	// 审核成功
-	if err := c.updateColById(contentID, "ApprovalStatus", int32(2)); err != nil {
+	if err := c.updateColById(ContentIdxID, "ApprovalStatus", int32(2)); err != nil {
 		return nil, err
 	}
 	return data, nil
@@ -165,10 +165,10 @@ func (c *ContentFlow) fail(data []byte, options map[string][]string) ([]byte, er
 	if err := json.Unmarshal(data, &input); err != nil {
 		return nil, err
 	}
-	contentID := int64(input["id"].(float64))
+	ContentIdxID := int64(input["id"].(float64))
 	// 审核失败
 
-	if err := c.updateColById(contentID, "ApprovalStatus", int32(3)); err != nil {
+	if err := c.updateColById(ContentIdxID, "ApprovalStatus", int32(3)); err != nil {
 		return nil, err
 	}
 	return data, nil
@@ -180,10 +180,9 @@ func (c *ContentFlow) finish(data []byte, options map[string][]string) ([]byte, 
 	return data, nil
 }
 
-func (c *ContentFlow) updateColById(contentID int64, colName string, data any) error {
+func (c *ContentFlow) updateColById(ContentIdxID int64, colName string, data any) error {
 
 	content := &operate.Content{
-		ID:             contentID,
 		Title:          "",
 		VideoURL:       "",
 		Author:         "",
@@ -203,6 +202,7 @@ func (c *ContentFlow) updateColById(contentID int64, colName string, data any) e
 	}
 
 	_, err := c.client.UpdateContent(context.Background(), &operate.UpdateContentReq{
+		IdxID:   ContentIdxID,
 		Content: content,
 	})
 

@@ -11,7 +11,7 @@ import (
 )
 
 type ContentUpdateReq struct {
-	ID             int64         `json:"id" binding:"required"` // 内容ID
+	IdxID          int64         `json:"id" binding:"required"` // 内容ID
 	Title          string        `json:"title"`                 // 内容标题
 	VideoURL       string        `json:"video_url"`             // 视频播放URL
 	Author         string        `json:"author" `               // 作者
@@ -41,8 +41,7 @@ func (app *CmsApp) ContentUpdate(ctx *gin.Context) {
 		return
 	}
 
-	_, err := app.operateAppClient.UpdateContent(context.Background(), &operate.UpdateContentReq{Content: &operate.Content{
-		ID:             contentUpdateReq.ID,
+	_, err := app.operateAppClient.UpdateContent(context.Background(), &operate.UpdateContentReq{IdxID: contentUpdateReq.IdxID, Content: &operate.Content{
 		Title:          contentUpdateReq.Title,
 		VideoURL:       contentUpdateReq.VideoURL,
 		Author:         contentUpdateReq.Author,
@@ -65,7 +64,7 @@ func (app *CmsApp) ContentUpdate(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, &ContentUpdateRsp{
 		Code:    0,
 		Message: "success",
-		Data:    fmt.Sprintf("content id [%d] updated", contentUpdateReq.ID),
+		Data:    fmt.Sprintf("content id [%d] updated", contentUpdateReq.IdxID),
 	})
 
 }

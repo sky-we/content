@@ -1,7 +1,6 @@
 syntax = "proto3";
-import "google/protobuf/any.proto";
 package api.content.operate;
-
+import "google/protobuf/timestamp.proto";
 option go_package = "content-manage/api/content/operate;operate";
 option java_multiple_files = true;
 option java_package = "api.content.operate";
@@ -9,41 +8,44 @@ option java_package = "api.content.operate";
 service App {
   rpc CreateContent (CreateContentReq) returns (CreateContentRsp);
   rpc UpdateContent (UpdateContentReq) returns (UpdateContentRsp);
-  rpc UpdateContentCol (UpdateContentColReq) returns (UpdateContentColRsp);
   rpc DeleteContent (DeleteContentReq) returns (DeleteContentRsp);
   rpc FindContent (FindContentReq) returns (FindContentRsp);
 
 }
 
 message Content {
-
-  // 内容ID
+  // 索引ID
   int64 ID = 1;
+  // 内容ID
+  string contentID = 2;
   // 内容标题
-  string title = 2;
+  string title = 3;
   // 视频播放URL
-  string VideoURL = 3;
+  string VideoURL = 4;
   // 作者
-  string author = 4;
+  string author = 5;
   // 内容描述
-  string Description = 5;
+  string Description = 6;
   // 封面图URL
-  string thumbnail = 6;
+  string thumbnail = 7;
   // 内容分类
-  string category = 7;
+  string category = 8;
   // 内容时长
-  int64 duration = 8;
+  int64 duration = 9;
   // 分辨率 如720p、1080p
-  string resolution = 9;
+  string resolution = 10;
   // 文件大小
-  int64 file_size = 10;
+  int64 fileSize = 11;
   // 文件格式 如MP4、AVI
-  string format = 11;
+  string format = 12;
   //  // 视频质量 1-高清 2-标清
-  int32 quality = 12;
+  int32 quality = 13;
   // 审核状态 1-审核中 2-审核通过 3-审核不通过
-  int32 approval_status = 13;
-
+  int32 approvalStatus = 14;
+  // 创建时间
+  google.protobuf.Timestamp createdAt = 15;
+  // 审核状态 1-审核中 2-审核通过 3-审核不通过
+  google.protobuf.Timestamp updatedAt = 16;
 }
 
 // 创建
@@ -52,35 +54,27 @@ message CreateContentReq {
 }
 
 message CreateContentRsp {
-  int64 id = 1;
+  int64 idxID = 1;
 }
 
 // 更新
 message UpdateContentReq {
-  Content content = 1;
+  int64  idxID = 1;
+  Content content = 2;
 }
 
 message UpdateContentRsp {}
 
-// 更新单列
-message UpdateContentColReq {
-  int64 id  =1;
-  string colName = 2;
-  google.protobuf.Any data = 3;
-}
-
-message UpdateContentColRsp {}
-
 // 删除
 message DeleteContentReq {
-  int64 id = 1;
+  int64 IdxID = 1;
 }
 
 message DeleteContentRsp {}
 
 // 查找
 message FindContentReq {
-  int64 id = 1;
+  int64 IdxID = 1;
   string title = 2;
   string author = 3;
   int64 page = 4;
@@ -89,5 +83,4 @@ message FindContentReq {
 
 message FindContentRsp {
   repeated Content content = 1;
-  int64 total = 2;
 }

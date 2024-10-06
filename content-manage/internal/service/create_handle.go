@@ -4,15 +4,14 @@ import (
 	"content-manage/api/operate"
 	"content-manage/internal/biz"
 	"context"
-	"github.com/google/uuid"
 	"time"
 )
 
 func (app *AppService) CreateContent(ctx context.Context, req *operate.CreateContentReq) (*operate.CreateContentRsp, error) {
 	content := req.GetContent()
 	uc := app.uc
-	ContentID, err := uc.CreateContent(ctx, &biz.Content{
-		ContentId:      uuid.New().String(),
+	ContentIdxID, err := uc.CreateContent(ctx, &biz.Content{
+		ContentId:      content.GetContentID(),
 		Title:          content.GetTitle(),
 		VideoURL:       content.GetVideoURL(),
 		Author:         content.GetAuthor(),
@@ -31,6 +30,6 @@ func (app *AppService) CreateContent(ctx context.Context, req *operate.CreateCon
 	}
 
 	return &operate.CreateContentRsp{
-		Id: ContentID,
+		IdxID: ContentIdxID,
 	}, nil
 }

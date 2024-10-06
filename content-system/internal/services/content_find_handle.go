@@ -10,7 +10,7 @@ import (
 )
 
 type Content struct {
-	ID             int           // 内容ID
+	ID             int64         // 内容ID
 	Title          string        // 内容标题
 	Description    string        // 内容描述
 	Author         string        // 作者
@@ -23,9 +23,12 @@ type Content struct {
 	Format         string        // 文件格式 如MP4、AVI
 	Quality        int32         // 视频质量 1-高清 2-标清
 	ApprovalStatus int32         // 审核状态 1-审核中 2-审核通过 3-审核不通过
+	CreatedAt      string        // 创建时间
+	UpdatedAt      string        // 更新时间
 }
+
 type ContentFindReq struct {
-	ID       int64  `json:"id"`       // 内容ID
+	IdxID    int64  `json:"id"`       // 内容ID
 	Author   string `json:"author"`   // 内容作者
 	Title    string `json:"title"`    // 内容标题
 	Page     int64  `json:"page"`     // 页数
@@ -47,7 +50,7 @@ func (app *CmsApp) ContentFind(ctx *gin.Context) {
 		return
 	}
 	rsp, err := app.operateAppClient.FindContent(context.Background(), &operate.FindContentReq{
-		Id:       contentFindReq.ID,
+		IdxID:    contentFindReq.IdxID,
 		Title:    contentFindReq.Title,
 		Author:   contentFindReq.Author,
 		Page:     contentFindReq.Page,
@@ -58,12 +61,35 @@ func (app *CmsApp) ContentFind(ctx *gin.Context) {
 		return
 	}
 
+	contentDetails := make([]Content, 0)
+	for _, r := range rsp.Content {
+		contentDetails = append(contentDetails, Content{
+			ID:             r.ID,
+			Title:          r.Title,
+			VideoURL:       r.VideoURL,
+			Author:         r.Author,
+			Description:    r.Description,
+			Thumbnail:      r.Thumbnail,
+			Category:       r.Category,
+			Duration:       time.Duration(r.Duration),
+			Resolution:     r.Resolution,
+			FileSize:       r.FileSize,
+			Format:         r.Format,
+			Quality:        r.Quality,
+			ApprovalStatus: r.ApprovalStatus,
+			CreatedAt:      r.CreatedAt.AsTime().Format("2006-01-02 15:04:05"),
+			UpdatedAt:      r.UpdatedAt.AsTime().Format("2006-01-02 15:04:05"),
+		})
+	}
+	if len(contentDetails) == 0 {
+		rsp.Content = []*operate.Content{}
+	}
 	ctx.JSON(http.StatusOK, &ContentFindRsp{
 		Code:    0,
 		Message: "success",
 		Data: gin.H{
-			"content": rsp.Content,
-			"total":   rsp.Total,
+			"content": contentDetails,
+			"total":   len(contentDetails),
 		},
 	})
 

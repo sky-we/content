@@ -6,12 +6,12 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/go-kratos/kratos/v2/errors"
+	"github.com/google/uuid"
 	"net/http"
 	"time"
 )
 
 type ContentCreateReq struct {
-	ID             int           `json:"id"`                           // 内容ID
 	Title          string        `json:"title" binding:"required"`     // 内容标题
 	VideoURL       string        `json:"video_url" binding:"required"` // 视频播放URL
 	Author         string        `json:"author" binding:"required"`    // 作者
@@ -44,13 +44,14 @@ func (app *CmsApp) ContentCreate(ctx *gin.Context) {
 		return
 	}
 	rsp, err := app.operateAppClient.CreateContent(context.Background(), &operate.CreateContentReq{Content: &operate.Content{
+		ContentID:      uuid.New().String(),
 		Title:          contentCreateReq.Title,
 		VideoURL:       contentCreateReq.VideoURL,
 		Author:         contentCreateReq.Author,
 		Description:    contentCreateReq.Description,
 		Thumbnail:      contentCreateReq.Thumbnail,
 		Category:       contentCreateReq.Category,
-		Duration:       contentCreateReq.Duration.Milliseconds(),
+		Duration:       contentCreateReq.Duration.Nanoseconds(),
 		Resolution:     contentCreateReq.Resolution,
 		FileSize:       contentCreateReq.FileSize,
 		Format:         contentCreateReq.Format,
@@ -64,15 +65,17 @@ func (app *CmsApp) ContentCreate(ctx *gin.Context) {
 
 	// 数据加工开始
 	go func() {
-		if err := app.startContentFlow(rsp.Id, config.ClientCfg.FlowServiceClient); err != nil {
+		if err := app.startContentFlow(rsp.IdxID, config.ClientCfg.FlowServiceClient); err != nil {
 			Logger.Errorf("start content flow error %v", err)
 		}
 	}()
-
+	type ContentID struct {
+		ID int64
+	}
 	ctx.JSON(http.StatusOK, &ContentCreateRsp{
 		Code:    0,
 		Message: "success",
-		Data:    rsp,
+		Data:    ContentID{ID: rsp.IdxID},
 	})
 
 }

@@ -9,8 +9,9 @@ import (
 
 func (app *AppService) UpdateContent(ctx context.Context, req *operate.UpdateContentReq) (*operate.UpdateContentRsp, error) {
 	uc := app.uc
+	idxID := req.GetIdxID()
 	content := req.GetContent()
-	err := uc.UpdateContent(ctx, content.GetID(), &biz.Content{
+	err := uc.UpdateContent(ctx, idxID, &biz.Content{
 		Title:          content.GetTitle(),
 		VideoURL:       content.GetVideoURL(),
 		Author:         content.GetAuthor(),
@@ -29,13 +30,4 @@ func (app *AppService) UpdateContent(ctx context.Context, req *operate.UpdateCon
 	}
 
 	return &operate.UpdateContentRsp{}, nil
-}
-
-func (app *AppService) UpdateContentCol(ctx context.Context, req *operate.UpdateContentColReq) (*operate.UpdateContentColRsp, error) {
-	uc := app.uc
-	err := uc.UpdateContentCol(ctx, req.GetId(), req.GetColName(), req.GetData())
-	if err != nil {
-		return nil, err
-	}
-	return nil, nil
 }

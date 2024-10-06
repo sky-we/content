@@ -6,9 +6,9 @@ import (
 )
 
 func (app *AppService) DeleteContent(ctx context.Context, req *operate.DeleteContentReq) (*operate.DeleteContentRsp, error) {
-	id := req.GetId()
+	idxID := req.GetIdxID()
 	uc := app.uc
-	err := uc.DeleteContent(ctx, id)
+	err := uc.DeleteContent(ctx, idxID)
 	if err != nil {
 		return nil, err
 	}

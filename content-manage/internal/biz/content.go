@@ -38,10 +38,9 @@ type FindParams struct {
 
 type ContentRepo interface {
 	Create(ctx context.Context, content *Content) (int64, error)
-	Update(ctx context.Context, id int64, content *Content) error
-	UpdateCol(ctx context.Context, id int64, colName string, data any) error
-	Delete(ctx context.Context, id int64) error
-	Find(ctx context.Context, params *FindParams) (*[]*Content, int64, error)
+	Update(ctx context.Context, idxID int64, content *Content) error
+	Delete(ctx context.Context, idxID int64) error
+	Find(ctx context.Context, params *FindParams) (*[]*Content, error)
 }
 
 type ContentUseCase struct {
@@ -54,26 +53,21 @@ func NewContentUseCase(repo ContentRepo, logger log.Logger) *ContentUseCase {
 }
 
 func (c *ContentUseCase) CreateContent(ctx context.Context, content *Content) (int64, error) {
-	c.log.WithContext(ctx).Infof("biz domain create content: [%+v]", content)
+	c.log.WithContext(ctx).Infof("[biz domain] create content: [%+v]", content)
 	return c.repo.Create(ctx, content)
 }
 
-func (c *ContentUseCase) UpdateContent(ctx context.Context, id int64, content *Content) error {
-	c.log.WithContext(ctx).Infof("biz domain update content: id:[%d], [%+v]", id, content)
-	return c.repo.Update(ctx, id, content)
+func (c *ContentUseCase) UpdateContent(ctx context.Context, idxID int64, content *Content) error {
+	c.log.WithContext(ctx).Infof("[biz domain] update content: id:[%d], [%+v]", idxID, content)
+	return c.repo.Update(ctx, idxID, content)
 }
 
-func (c *ContentUseCase) UpdateContentCol(ctx context.Context, id int64, colName string, data any) error {
-	c.log.WithContext(ctx).Infof("biz domain update content col: id:[%d] colName:[%s], data:[%+v]", id, colName, data)
-	return c.repo.UpdateCol(ctx, id, colName, data)
+func (c *ContentUseCase) DeleteContent(ctx context.Context, idxID int64) error {
+	c.log.WithContext(ctx).Infof("[biz domain] del content: id:[%d]", idxID)
+	return c.repo.Delete(ctx, idxID)
 }
 
-func (c *ContentUseCase) DeleteContent(ctx context.Context, id int64) error {
-	c.log.WithContext(ctx).Infof("biz domain del content: id:[%d]", id)
-	return c.repo.Delete(ctx, id)
-}
-
-func (c *ContentUseCase) FindContent(ctx context.Context, params *FindParams) (*[]*Content, int64, error) {
-	c.log.WithContext(ctx).Infof("biz domain find content: FindParams:[%v]", params)
+func (c *ContentUseCase) FindContent(ctx context.Context, params *FindParams) (*[]*Content, error) {
+	c.log.WithContext(ctx).Infof("[biz domain] find content: FindParams:[%v]", params)
 	return c.repo.Find(ctx, params)
 }
