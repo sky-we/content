@@ -1,0 +1,80 @@
+version: '3.8'
+services:
+  etcd:
+    image: quay.io/coreos/etcd:v3.4.15
+    environment:
+      ETCD_UNSUPPORTED_ARCH: arm64
+    ports:
+      - "2379:2379"
+  redis:
+    image: redis:alpine # 使用轻量级Redis镜像
+    container_name: lw-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+  mysql:
+    image: mysql:8.0
+    container_name: lw-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 1qaz!QAZ
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  content-manage:
+    build:
+      context: ./content-manage
+      dockerfile: Dockerfile
+    ports:
+      - "9000:9000"
+    depends_on:
+      - etcd
+      - redis
+      - mysql
+
+  content-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    ports:
+      - "7088:7088"
+    depends_on:
+      - redis
+      - etcd
+
+  content-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    ports:
+      - "9090:9090"
+    depends_on:
+      - redis
+      - etcd
+
+
+  content-flow:
+      build:
+        context: ./content-flow
+        dockerfile: Dockerfile
+      ports:
+        - "7088:7088"
+      depends_on:
+        - etcd
+        - redis
+
+  content-system:
+      build:
+        context: ./content-system
+        dockerfile: Dockerfile
+      ports:
+        - "8080:8080"
+      depends_on:
+        - etcd
+        - redis
+        - mysql
+
+
+
