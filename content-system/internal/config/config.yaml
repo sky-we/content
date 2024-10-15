@@ -1,8 +1,8 @@
 mysql:
-  host: "localhost"
+  host: "container-mysql"
   port: 3306
   username: "root"
-  password: "1qaz!QAZ"
+  password: "3edc#EDC"
   ChartSet: "utf8mb4"
   parseTime: "True"
   loc: "Local"
@@ -10,28 +10,18 @@ mysql:
   MaxIdleConn: 2
 
 redis:
-  host: "localhost"
+  host: "container-redis"
   port: 6379
   username: ""
   password: ""
   DB: 0
 
-redisWin:
-  host: "localhost"
-  port: 6379
-  password: ""
-  DB: 0
-
-
-AppClient:
-  host: "localhost"
-  port: 9000
 
 flowServiceClient:
-  host: "localhost"
+  host: "container-flow"
   port: 7088
   flowName: "content-flow"
 
 EtcdClient:
-  host: "localhost"
+  host: "container-etcd"
   port: 2379

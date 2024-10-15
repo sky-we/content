@@ -37,13 +37,6 @@ type RedisConfig struct {
 	DB       int
 }
 
-type RedisWinConfig struct {
-	Host     string
-	Port     int
-	Password string
-	DB       int
-}
-
 type FlowServiceClientConfig struct {
 	Host     string
 	Port     int
@@ -63,7 +56,6 @@ type EtcdClientConfig struct {
 type ClientConfig struct {
 	MySQL             *MysqlConfig
 	Redis             *RedisConfig
-	RedisWin          *RedisWinConfig
 	FlowServiceClient *FlowServiceClientConfig
 	AppClient         *AppClientConfig
 	EtcdClient        *EtcdClientConfig
@@ -73,6 +65,8 @@ var (
 	once      sync.Once
 	ClientCfg *ClientConfig
 	Logger    = middleware.GetLogger()
+	// 容器内部的配置文件挂载点
+	containerConfig = "/app/config"
 )
 
 func LoadDBConfig() {
@@ -80,7 +74,7 @@ func LoadDBConfig() {
 	once.Do(func() {
 		viper.SetConfigName("config")
 		viper.SetConfigType("yaml")
-		viper.AddConfigPath("internal/config")
+		viper.AddConfigPath(containerConfig)
 
 		if err := viper.ReadInConfig(); err != nil {
 			Logger.Error("error reading db config file, %s", err)
@@ -141,7 +135,7 @@ func NewAppClient(cfg *EtcdClientConfig) operate.AppClient {
 	}
 	dis := etcd.New(client)
 
-	endPoint := "discovery:///Content-System"
+	endPoint := "discovery:///Content-Manage-MicroService"
 
 	conn, err := grpc.DialInsecure(
 		context.Background(),

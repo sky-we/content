@@ -1,8 +1,6 @@
 module content-manage
 
-go 1.22
-
-toolchain go1.23.0
+go 1.23
 
 require (
 	github.com/go-kratos/kratos/contrib/registry/etcd/v2 v2.0.0-20240918015945-e1f5dc42b1e5
@@ -10,6 +8,7 @@ require (
 	github.com/google/wire v0.6.0
 	go.etcd.io/etcd/client/v3 v3.5.16
 	go.uber.org/automaxprocs v1.6.0
+	golang.org/x/sync v0.8.0
 	google.golang.org/grpc v1.67.0
 	google.golang.org/protobuf v1.34.2
 	gorm.io/driver/mysql v1.5.7
@@ -43,7 +42,6 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.17.0 // indirect
 	golang.org/x/net v0.29.0 // indirect
-	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.25.0 // indirect
 	golang.org/x/text v0.18.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240924160255-9d4c2d233b61 // indirect

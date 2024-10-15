@@ -21,16 +21,19 @@ RUN go mod download
 COPY ./ ./
 
 # 编译
-RUN go build -o /build/content-flow-worker cmd/server/main.go
+RUN go build -o /build/content-flow cmd/server/main.go
 
 # 使用更小的基础镜像（如 alpine）
 FROM alpine:latest
 
 # 复制可执行文件
-COPY --from=builder /build/content-flow-worker /usr/local/bin/content-flow-worker
+COPY --from=builder /build/content-flow /usr/local/bin/content-flow
+
+# 暴露服务端口
+EXPOSE 7088
 
 # 配置文件挂载点
 VOLUME /app/config
 VOLUME /app/logs
 # 启动应用
-CMD ["/usr/local/bin/content-flow-worker"]
+CMD ["/usr/local/bin/content-flow"]

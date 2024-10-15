@@ -1,26 +1,27 @@
 # 使用官方 Go 作为基础镜像
-FROM golang:1.19 as builder
-
-ENV CGO_ENABLED=0 GOOS=linux GOARCH=x86_64
-
+FROM golang:1.23-alpine as builder
+# 设置代理
+ENV GOPROXY=https://goproxy.cn,direct
+# 在alpine linux中：禁用CGO 不需要使用C代码
+ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
 # 设置工作目录
 WORKDIR /app
-
-COPY ./content-system/go.mod ./content-system/go.sum ./
+# copy go 依赖
+COPY ./go.mod ./go.sum ./
+# 下载 go 依赖
 RUN go mod download
-COPY ./content-system .
-RUN go build -o /build/content-system
-
-
+# copy 工程目录到工作目录
+COPY ./ ./
+# go build
+RUN go build -o /build/content-system cmd/content-system/main.go
+# 使用更小的基础镜像（如 alpine）
 FROM alpine:latest
 
+# 复制可执行文件
 COPY --from=builder /build/content-system /usr/local/bin/content-system
-
-# 使用更小的基础镜像（如alpine）
-FROM alpine:latest
-
+WORKDIR /app/content-system/
+COPY ./ ./
 # 暴露服务端口
-EXPOSE 9000
-
+EXPOSE 8088
 # 启动应用
 CMD ["/usr/local/bin/content-system"]

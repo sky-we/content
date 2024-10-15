@@ -18,9 +18,9 @@ import (
 // go build -ldflags "-X main.Version=x.y.z"
 var (
 	// Name is the name of the compiled software.
-	Name = "Content-System"
+	Name = "Content-Manage-MicroService"
 	// Version is the version of the compiled software.
-	Version = "1.0.0"
+	Version = "0.0.1"
 	// flagconf is the config flag.
 	flagconf string
 
@@ -28,7 +28,7 @@ var (
 )
 
 func init() {
-	flag.StringVar(&flagconf, "conf", "../configs", "config path, eg: -conf config.yaml")
+	flag.StringVar(&flagconf, "conf", "../../configs", "config path, eg: -conf config.yaml")
 }
 
 func newApp(logger log.Logger, gs *grpc.Server, conf *conf.Data) *kratos.App {

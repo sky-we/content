@@ -53,6 +53,7 @@ func NewContentUseCase(repo ContentRepo, logger log.Logger) *ContentUseCase {
 }
 
 func (c *ContentUseCase) CreateContent(ctx context.Context, content *Content) (int64, error) {
+
 	c.log.WithContext(ctx).Infof("[biz domain] create content: [%+v]", content)
 	return c.repo.Create(ctx, content)
 }

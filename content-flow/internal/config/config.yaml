@@ -1,9 +1,9 @@
 flowService:
-  redisURL: "localhost:6379"
+  redisURL: "container-redis:6379"
   port: 7088
   workerConcurrency: 5
   flowName: "content-flow"
 
 Etcd:
-  host: "localhost"
+  host: "container-etcd"
   port: 2379
