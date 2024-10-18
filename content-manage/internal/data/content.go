@@ -64,6 +64,14 @@ func getShardTableName(contentID string) string {
 func (c *contentRepo) Create(ctx context.Context, content *biz.Content) (int64, error) {
 	db := c.data.db
 	tableName := getShardTableName(content.ContentId)
+	repeat, err := c.IsTitleRepeat(ctx, IdxContentDetail{}.TableName(), content.Title)
+	if err != nil {
+		return 0, errors.New(http.StatusInternalServerError, "SERVER_INTER_ERROR", fmt.Sprintf("创建失败，内部服务器错误：%s", err))
+	}
+
+	if repeat {
+		return 0, errors.New(http.StatusBadRequest, "TITLE_REPEAT", fmt.Sprintf("[title=%s]内容已存在", content.Title))
+	}
 	idx := IdxContentDetail{
 		ContentID: content.ContentId,
 		Title:     content.Title,
@@ -74,14 +82,6 @@ func (c *contentRepo) Create(ctx context.Context, content *biz.Content) (int64, 
 		return 0, err
 	}
 
-	repeat, err := c.IsVideoRepeat(ctx, tableName, content.VideoURL)
-	if err != nil {
-		return 0, errors.New(http.StatusInternalServerError, "SERVER_INTER_ERROR", fmt.Sprintf("创建失败，内部服务器错误：%s", err))
-	}
-
-	if repeat {
-		return 0, errors.New(http.StatusBadRequest, "VIDEO_URL_REPEAT", fmt.Sprintf("[video_url=%s]内容已存在", content.VideoURL))
-	}
 	detail := &ContentDetail{
 		ContentId:      content.ContentId,
 		Title:          content.Title,
@@ -220,16 +220,16 @@ func (c *contentRepo) IsContentExist(ctx context.Context, tableName string, Cont
 	return true, nil
 }
 
-func (c *contentRepo) IsVideoRepeat(ctx context.Context, tableName string, videoUrl string) (bool, error) {
+func (c *contentRepo) IsTitleRepeat(ctx context.Context, tableName string, title string) (bool, error) {
 	db := c.data.db
-	var contentDetail ContentDetail
-	err := db.Table(tableName).Where("video_url = ?", videoUrl).First(&contentDetail).Error
+	var idxContentDetail IdxContentDetail
+	err := db.Table(tableName).Where("title = ?", title).First(&idxContentDetail).Error
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return false, nil
 	}
 	if err != nil {
-		return false, errors.New(http.StatusInternalServerError, "Query Content By video_url Failed", err.Error())
+		return false, errors.New(http.StatusInternalServerError, "Query Content By title Failed", err.Error())
 	}
 
 	return true, nil

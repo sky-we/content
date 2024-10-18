@@ -57,7 +57,8 @@ func newApp(logger log.Logger, gs *grpc.Server, conf *conf.Data) *kratos.App {
 
 func main() {
 	flag.Parse()
-	logger := log.With(log.NewStdLogger(os.Stdout),
+	logFile, err := os.OpenFile("/app/logs/content-manage.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	logger := log.With(log.NewStdLogger(logFile),
 		"ts", log.DefaultTimestamp,
 		"caller", log.DefaultCaller,
 		"service.id", id,

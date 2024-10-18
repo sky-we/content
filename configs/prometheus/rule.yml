@@ -1,0 +1,41 @@
+groups:
+  - name: http_request_rules
+    rules:
+      # 告警规则：高请求延迟
+      - alert: HighRequestLatency
+        expr: rate(ContentSystem_http_response_time_seconds_sum[5m]) / rate(ContentSystem_http_response_time_seconds_count[5m]) > 0.5
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High request latency on {{ $labels.method }} {{ $labels.path }}"
+          description: "The average response time for {{ $labels.method }} {{ $labels.path }} is above 0.5 seconds for more than 10 minutes."
+
+      # 告警规则：高请求速率
+      - alert: HighRequestRate
+        expr: rate(ContentSystem_http_requests_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High request rate on {{ $labels.method }} {{ $labels.path }}"
+          description: "The request rate for {{ $labels.method }} {{ $labels.path }} is above 100 requests per second for more than 5 minutes."
+
+      # 告警规则：高错误率
+      - alert: HighErrorRate
+        expr: rate(ContentSystem_http_request_code_total{code='400'}[1m] > 0.01
+        for: 10s
+        labels:
+          severity: high
+        annotations:
+          summary: "High error rate detected"
+          description: "The error rate for {{ $labels.method }} {{ $labels.path }} HTTP code with 400 rate is above 0.01 per 10s."
+
+      # 记录规则：按方法和路径汇总的请求速率
+      - record: job:http_request_rate:sum
+        expr: sum(rate(ContentSystem_http_requests_total[5m])) by (method, path)
+
+      # 记录规则：按方法和路径汇总的平均响应时间
+      - record: job:http_response_time:avg
+        expr: sum(rate(ContentSystem_http_response_time_seconds_sum[5m])) by (method, path) / sum(rate(ContentSystem_http_response_time_seconds_count[5m])) by (method, path)
+

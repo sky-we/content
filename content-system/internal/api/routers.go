@@ -5,6 +5,7 @@ import (
 	"content-system/internal/middleware"
 	"content-system/internal/services"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
@@ -20,8 +21,7 @@ func CmsRouters(r *gin.Engine) {
 	// 依赖注入
 	cmsApp := services.NewCmsApp(db, rdb, appClient)
 
-	// 启动内容加工Flow
-	//cmsApp.StartFlow(flowService)
+	r.Use(middleware.PrometheusMiddleware())
 
 	// 鉴权中间件
 	sessionMiddleware := &middleware.SessionAuth{Rdb: rdb}
@@ -54,5 +54,7 @@ func CmsRouters(r *gin.Engine) {
 		// 用户登录
 		outRoot.POST("/cms/login", cmsApp.Login)
 	}
+	// prometheus 采集指标
+	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 }

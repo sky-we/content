@@ -35,7 +35,7 @@ type ContentCreateRsp struct {
 }
 
 func (app *CmsApp) ContentCreate(ctx *gin.Context) {
-	Logger.Info("create content")
+	Logger.Info("[content-system|Gin service] create content start")
 	var contentCreateReq ContentCreateReq
 
 	// 入参校验
@@ -43,6 +43,7 @@ func (app *CmsApp) ContentCreate(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"Message": "参数错误", "error": err.Error()})
 		return
 	}
+	Logger.Info("[content-system|Invoke Grpc Service] operateAppClient.CreateContent start")
 	rsp, err := app.operateAppClient.CreateContent(context.Background(), &operate.CreateContentReq{Content: &operate.Content{
 		ContentID:      uuid.New().String(),
 		Title:          contentCreateReq.Title,
@@ -58,10 +59,13 @@ func (app *CmsApp) ContentCreate(ctx *gin.Context) {
 		Quality:        contentCreateReq.Quality,
 		ApprovalStatus: contentCreateReq.ApprovalStatus,
 	}})
+	Logger.Info("[content-system|Invoke Grpc Service] operateAppClient.CreateContent end")
+
 	if err != nil {
 		ctx.AbortWithStatusJSON(errors.Code(err), gin.H{"Message": err.Error()})
 		return
 	}
+	Logger.Info("[content-system|Invoke Go-Flow server] startContentFlow start")
 
 	// 数据加工开始
 	go func() {
@@ -77,5 +81,5 @@ func (app *CmsApp) ContentCreate(ctx *gin.Context) {
 		Message: "success",
 		Data:    ContentID{ID: rsp.IdxID},
 	})
-
+	Logger.Info("[content-system|Gin service] create content end")
 }
