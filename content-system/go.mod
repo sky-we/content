@@ -7,6 +7,10 @@ require (
 	github.com/go-kratos/kratos/contrib/registry/etcd/v2 v2.0.0-20240918015945-e1f5dc42b1e5
 	github.com/go-kratos/kratos/v2 v2.8.0
 	github.com/google/uuid v1.6.0
+	github.com/opentracing-contrib/go-gin v0.0.0-20230313182354-1499e56cc906
+	github.com/opentracing/opentracing-go v1.2.0
+	github.com/openzipkin-contrib/zipkin-go-opentracing v0.5.0
+	github.com/openzipkin/zipkin-go v0.4.3
 	github.com/prometheus/client_golang v1.11.1
 	github.com/redis/go-redis/v9 v9.6.1
 	github.com/s8sg/goflow v0.1.5-0.20230729173817-d3eded44d6f8
@@ -22,7 +26,6 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
 	github.com/adjust/rmq/v4 v4.0.5 // indirect
 	github.com/alexellis/hmac v1.3.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -63,7 +66,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/opentracing/opentracing-go v1.2.0 // indirect
+	github.com/opentracing-contrib/go-observer v0.0.0-20170622124052-a52f23424492 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect

@@ -21,7 +21,8 @@ func CmsRouters(r *gin.Engine) {
 	// 依赖注入
 	cmsApp := services.NewCmsApp(db, rdb, appClient)
 
-	r.Use(middleware.PrometheusMiddleware())
+	r.Use(middleware.Prometheus())
+	r.Use(middleware.OpenTracing())
 
 	// 鉴权中间件
 	sessionMiddleware := &middleware.SessionAuth{Rdb: rdb}
