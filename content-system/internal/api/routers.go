@@ -55,6 +55,7 @@ func CmsRouters(r *gin.Engine) {
 		// 用户登录
 		outRoot.POST("/cms/login", cmsApp.Login)
 	}
+
 	// prometheus 采集指标
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
