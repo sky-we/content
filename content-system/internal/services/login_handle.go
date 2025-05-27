@@ -6,6 +6,7 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/opentracing/opentracing-go"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"time"
@@ -22,7 +23,8 @@ type LoginRsp struct {
 }
 
 func (app *CmsApp) Login(ctx *gin.Context) {
-
+	// zipkin span的context记录在gin ctx.Request里面（中间件实现）
+	span := opentracing.SpanFromContext(ctx.Request.Context())
 	var loginReq LoginReq
 
 	if err := ctx.ShouldBindJSON(&loginReq); err != nil {
@@ -34,9 +36,10 @@ func (app *CmsApp) Login(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"Message": "用户已登录"})
 		return
 	}
+	span.SetTag("reqInfo", loginReq)
 
 	accountDao := dao.NewAccountDao(app.db)
-	account, err := accountDao.FindByUserId(loginReq.UserId)
+	account, err := accountDao.FindByUserId(ctx.Request.Context(), loginReq.UserId)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"Message": "请输入正确的用户ID"})
 		return
@@ -48,7 +51,7 @@ func (app *CmsApp) Login(ctx *gin.Context) {
 		return
 
 	}
-	sessionId, err := app.GenSessionId(context.Background(), account.UserId)
+	sessionId, err := app.GenSessionId(ctx.Request.Context(), account.UserId)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Message": "服务器内部错误", "err": err.Error()})
 
@@ -64,6 +67,8 @@ func (app *CmsApp) Login(ctx *gin.Context) {
 }
 
 func (app *CmsApp) GenSessionId(ctx context.Context, userId string) (string, error) {
+	span, _ := opentracing.StartSpanFromContext(ctx, "[Login] GenSessionID")
+	defer span.Finish()
 	sessionId := uuid.New().String()
 	sessionKey := utils.GenSessionKey(sessionId) // e.g. "session:{sessionId}"
 	// 将 userId、生成时间、过期时间等存在一个 Hash 里

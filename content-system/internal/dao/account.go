@@ -3,6 +3,7 @@ package dao
 import (
 	"content-system/internal/middleware"
 	"content-system/internal/model"
+	"context"
 	"errors"
 	"gorm.io/gorm"
 )
@@ -40,10 +41,10 @@ func (a *AccountDao) Create(account model.Account) error {
 	return nil
 }
 
-func (a *AccountDao) FindByUserId(userId string) (*model.Account, error) {
+func (a *AccountDao) FindByUserId(ctx context.Context, userId string) (*model.Account, error) {
 	var account model.Account
 
-	if err := a.db.Where("user_id = ?", userId).First(&account).Error; err != nil {
+	if err := a.db.WithContext(ctx).Where("user_id = ?", userId).First(&account).Error; err != nil {
 		Logger.Error("account dao FindByUserId error [%v]\n", err)
 		return nil, err
 	}

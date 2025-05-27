@@ -13,12 +13,21 @@ func Prometheus() gin.HandlerFunc {
 
 		Name: "http_requests_total",
 		Help: "Total number of http request code",
-	}, []string{"method", "path", "code"})
+	}, []string{"method", "path"})
+
+	requestsCodeTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "http_requests_code_total",
+		Help: "Total number of http request code",
+	}, []string{
+		"method",
+		"path",
+		"code",
+	})
 
 	reqDuration := prometheus.NewSummaryVec(prometheus.SummaryOpts{
 
-		Name: "response_time_total",
-		Help: "Response time of http request",
+		Name: "http_request_duration_seconds",
+		Help: "Http request duration in seconds",
 		Objectives: map[float64]float64{
 			0.5:  0.05, // 50%以上的请求响应时间
 			0.90: 0.01, // 90%以上的请求响应时间
@@ -31,17 +40,19 @@ func Prometheus() gin.HandlerFunc {
 
 	prometheus.MustRegister(rspCodeTotal)
 	prometheus.MustRegister(reqDuration)
+	prometheus.MustRegister(requestsCodeTotal)
 
 	return func(c *gin.Context) {
 		start := time.Now()
 		method := c.Request.Method
 		path := c.FullPath()
+		rspCodeTotal.WithLabelValues(method, path).Inc()
 
 		c.Next()
 		elapsed := time.Since(start)
 		reqDuration.WithLabelValues(method, path).Observe(elapsed.Seconds())
 
 		statusCode := c.Writer.Status()
-		rspCodeTotal.WithLabelValues(method, path, strconv.Itoa(statusCode)).Inc()
+		requestsCodeTotal.WithLabelValues(method, path, strconv.Itoa(statusCode)).Inc()
 	}
 }

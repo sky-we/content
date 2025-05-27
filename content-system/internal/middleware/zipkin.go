@@ -12,9 +12,9 @@ import (
 
 func OpenTracing() gin.HandlerFunc {
 	// 创建上报节点
-	report := reporter.NewReporter("http://localhost:9411/api/v2/spans")
+	report := reporter.NewReporter("http://container-zipkin:9411/api/v2/spans")
 	// 创建本地节点
-	endpoint, err := zipkin.NewEndpoint("content-system", "localhost:8080")
+	endpoint, err := zipkin.NewEndpoint("content-system", "container-system:8080")
 	if err != nil {
 		panic(err)
 	}
@@ -29,6 +29,7 @@ func OpenTracing() gin.HandlerFunc {
 
 	zipTracer := zipkinot.Wrap(tracer)
 	opentracing.SetGlobalTracer(zipTracer)
+	// 定义zipkin span name
 	return ginhttp.Middleware(zipTracer, ginhttp.OperationNameFunc(func(r *http.Request) string {
 		return r.URL.Path
 	}))

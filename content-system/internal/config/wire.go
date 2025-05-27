@@ -7,11 +7,16 @@ import (
 	"fmt"
 	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
+	"github.com/opentracing/opentracing-go"
+	zipkinot "github.com/openzipkin-contrib/zipkin-go-opentracing"
+	"github.com/openzipkin/zipkin-go"
+	reporter "github.com/openzipkin/zipkin-go/reporter/http"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	gormOpenTracing "gorm.io/plugin/opentracing"
 	"sync"
 	"time"
 )
@@ -110,7 +115,38 @@ func NewMySqlDB(cfg *MysqlConfig) *gorm.DB {
 	}
 	db.SetMaxOpenConns(cfg.MaxOpenConn)
 	db.SetMaxIdleConns(cfg.MaxIdleConn)
+	gormTracer := NewGormTracer()
+	pluginErr := mysqlDB.Use(gormTracer)
+	if pluginErr != nil {
+		panic(pluginErr)
+	}
 	return mysqlDB
+}
+
+func NewGormTracer() gorm.Plugin {
+	// 创建上报节点
+	report := reporter.NewReporter("http://container-zipkin:9411/api/v2/spans")
+	// 创建本地节点
+	endpoint, err := zipkin.NewEndpoint("content-system-gorm", "container-system:8080")
+
+	if err != nil {
+		panic(err)
+	}
+	// 创建zipkin tracer
+
+	tracer, err := zipkin.NewTracer(report,
+		zipkin.WithLocalEndpoint(endpoint), // 设置本地节点
+		zipkin.WithTraceID128Bit(true))     // 设置ID 128位
+	if err != nil {
+		panic(err)
+	}
+
+	zipTracer := zipkinot.Wrap(tracer)
+
+	opentracing.SetGlobalTracer(zipTracer)
+
+	return gormOpenTracing.New(gormOpenTracing.WithTracer(zipTracer))
+
 }
 
 func NewRdb(cfg *RedisConfig) *redis.Client {
