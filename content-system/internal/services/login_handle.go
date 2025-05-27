@@ -65,10 +65,17 @@ func (app *CmsApp) Login(ctx *gin.Context) {
 
 func (app *CmsApp) GenSessionId(ctx context.Context, userId string) (string, error) {
 	sessionId := uuid.New().String()
-	if err := app.rdb.Set(ctx, utils.GenSessionKey(userId), sessionId, time.Hour*8).Err(); err != nil {
+	sessionKey := utils.GenSessionKey(sessionId) // e.g. "session:{sessionId}"
+	// 将 userId、生成时间、过期时间等存在一个 Hash 里
+	data := map[string]interface{}{
+		"userId":    userId,
+		"createdAt": time.Now().Unix(),
+	}
+	if err := app.rdb.HSet(ctx, sessionKey, data).Err(); err != nil {
 		return "", err
 	}
-	if err := app.rdb.Set(ctx, utils.GenAuthKey(sessionId), time.Now().Unix(), time.Hour*8).Err(); err != nil {
+	// 设置过期
+	if err := app.rdb.Expire(ctx, sessionKey, 8*time.Hour).Err(); err != nil {
 		return "", err
 	}
 	return sessionId, nil
