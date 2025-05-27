@@ -58,7 +58,7 @@ func NewContentRepo(data *Data, logger log.Logger) biz.ContentRepo {
 }
 func getShardTableName(contentID string) string {
 	idx := utils.GenIdx(contentID, 4)
-	log.Infof("content_id = %s, tableIdx = %d", contentID, idx)
+	log.Info("content_id = %s, tableIdx = %d", contentID, idx)
 	return fmt.Sprintf("cms_content.content_details_%d", idx)
 }
 func (c *contentRepo) Create(ctx context.Context, content *biz.Content) (int64, error) {

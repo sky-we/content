@@ -35,5 +35,6 @@ EXPOSE 7088
 # 配置文件挂载点
 VOLUME /app/config
 VOLUME /app/logs
+
 # 启动应用
 CMD ["/usr/local/bin/content-flow"]
