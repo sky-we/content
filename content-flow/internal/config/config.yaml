@@ -4,6 +4,12 @@ flowService:
   workerConcurrency: 5
   flowName: "content-flow"
 
+FlowWorkerService:
+  redisURL: "container-redis:6379"
+  port: 7089
+  workerConcurrency: 5
+  flowName: "content-flow-worker"
+
 Etcd:
   host: "container-etcd"
   port: 2379

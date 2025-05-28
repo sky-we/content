@@ -14,7 +14,7 @@ func init() {
 func main() {
 	middleware.InitLogger()
 	Logger := middleware.GetLogger()
-	fs := config.NewFlowService(config.ClientCfg.FlowService)
+	fs := config.NewFlowWorkerService(config.ClientCfg.FlowWorkerService)
 	if err := fs.StartWorker(); err != nil {
 		Logger.Error("go-flow service start worker error")
 		panic(err)

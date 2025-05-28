@@ -25,7 +25,7 @@ func (s *SessionAuth) Auth(ctx *gin.Context) {
 		return
 	}
 	redisCtx := context.Background()
-	_, err := s.Rdb.Get(redisCtx, utils.GenAuthKey(sid)).Result()
+	_, err := s.Rdb.HGetAll(redisCtx, utils.GenSessionKey(sid)).Result()
 	if err != nil && !errors.Is(err, redis.Nil) {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"Message": "服务器内部错误", "err": err.Error()})
 		return
@@ -35,6 +35,6 @@ func (s *SessionAuth) Auth(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"Message": "用户未登录"})
 		return
 	}
-	Logger.Info("session id = %s", utils.GenAuthKey(sid))
+	Logger.Info("session id = %s", utils.GenSessionKey(sid))
 	ctx.Next()
 }

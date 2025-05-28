@@ -22,14 +22,22 @@ type FlowServiceCfg struct {
 	FlowName          string
 }
 
+type FlowWorkerServiceCfg struct {
+	Port              int
+	RedisURL          string
+	WorkerConcurrency int
+	FlowName          string
+}
+
 type EtcdCfg struct {
 	Host string
 	Port int
 }
 
 type clientCfg struct {
-	FlowService *FlowServiceCfg
-	Etcd        *EtcdCfg
+	FlowService       *FlowServiceCfg
+	FlowWorkerService *FlowWorkerServiceCfg
+	Etcd              *EtcdCfg
 }
 
 var (
@@ -60,6 +68,22 @@ func LoadFlowCfg() {
 }
 
 func NewFlowService(cfg *FlowServiceCfg) *goflow.FlowService {
+	fs := goflow.FlowService{
+		Port:              cfg.Port,
+		RedisURL:          cfg.RedisURL,
+		WorkerConcurrency: cfg.WorkerConcurrency,
+	}
+	client := NewAppClient(ClientCfg.Etcd)
+	contentFlow := process.NewContentFlow(client)
+	err := fs.Register(cfg.FlowName, contentFlow.ContentFlowHandle)
+	if err != nil {
+		panic(err)
+	}
+
+	return &fs
+}
+
+func NewFlowWorkerService(cfg *FlowWorkerServiceCfg) *goflow.FlowService {
 	fs := goflow.FlowService{
 		Port:              cfg.Port,
 		RedisURL:          cfg.RedisURL,
