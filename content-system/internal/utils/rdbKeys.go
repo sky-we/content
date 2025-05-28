@@ -2,10 +2,10 @@ package utils
 
 import "fmt"
 
-func GenSessionKey(userId string) string {
-	return fmt.Sprintf("session_id:%s", userId)
+func GenSessionKey(sessionId string) string {
+	return fmt.Sprintf("Session-ID:%s", sessionId)
 }
 
-func GenAuthKey(sessionId string) string {
-	return fmt.Sprintf("session_auth:%s", sessionId)
+func GenLoginKey(userId string) string {
+	return fmt.Sprintf("user:login:%s", userId)
 }

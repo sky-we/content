@@ -11,7 +11,7 @@ import (
 
 var Logger = GetLogger()
 
-const sessionKey = "session_id"
+const sessionKey = "Session-ID"
 
 type SessionAuth struct {
 	SessionId int
@@ -21,7 +21,7 @@ type SessionAuth struct {
 func (s *SessionAuth) Auth(ctx *gin.Context) {
 	sid := ctx.GetHeader(sessionKey)
 	if sid == "" {
-		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"Message": "用户未登录"})
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"Message": "用户未登录, session为空"})
 		return
 	}
 	redisCtx := context.Background()

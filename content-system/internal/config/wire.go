@@ -170,8 +170,8 @@ func NewAppClient(cfg *EtcdClientConfig) operate.AppClient {
 		panic(err)
 	}
 	dis := etcd.New(client)
-
-	endPoint := "discovery:///Content-System-MicroService"
+	// 依赖的manage grpc服务
+	endPoint := "discovery:///Content-Manage-MicroService"
 
 	conn, err := grpc.DialInsecure(
 		context.Background(),

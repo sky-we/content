@@ -70,24 +70,23 @@ func (app *CmsApp) GenSessionId(ctx context.Context, userId string) (string, err
 	span, _ := opentracing.StartSpanFromContext(ctx, "[Login] GenSessionID")
 	defer span.Finish()
 	sessionId := uuid.New().String()
-	sessionKey := utils.GenSessionKey(sessionId) // e.g. "session:{sessionId}"
+	sessionKey := utils.GenSessionKey(sessionId)
+	userLoginKey := utils.GenLoginKey(userId)
 	// 将 userId、生成时间、过期时间等存在一个 Hash 里
 	data := map[string]interface{}{
-		"userId":    userId,
-		"createdAt": time.Now().Unix(),
+		"user_id":   userId,
+		"create_at": time.Now(),
+		"expire_at": time.Now().Add(30 * time.Minute).Unix(),
 	}
-	if err := app.rdb.HSet(ctx, sessionKey, data).Err(); err != nil {
-		return "", err
-	}
-	// 设置过期
-	if err := app.rdb.Expire(ctx, sessionKey, 8*time.Hour).Err(); err != nil {
-		return "", err
-	}
+	app.rdb.HSet(ctx, sessionKey, data)
+	app.rdb.Expire(ctx, sessionKey, 30*time.Minute)
+	app.rdb.Set(ctx, userLoginKey, sessionId, 30*time.Minute)
+
 	return sessionId, nil
 }
 
 func (app *CmsApp) IsLogin(ctx context.Context, userId string) bool {
-	exists, err := app.rdb.Exists(ctx, utils.GenSessionKey(userId)).Result()
+	exists, err := app.rdb.Exists(ctx, utils.GenLoginKey(userId)).Result()
 	if err != nil {
 		panic(err)
 	}
